@@ -48,6 +48,31 @@ struct ContentView: View {
     @State private var nip21UriInput = ""
     @State private var nip21Result: Nip19Result? = nil
 
+    // Reactions / Reposts / Deletion / Auth
+    @State private var reactionEventId = ""
+    @State private var reactionAuthor = ""
+    @State private var reactionKind: UInt16 = 1
+    @State private var reactionContent = "+"
+    @State private var reactionJson = ""
+    @State private var repostEventJson = ""
+    @State private var repostResultJson = ""
+    @State private var deleteEventIds = ""
+    @State private var deleteReason = ""
+    @State private var deleteJson = ""
+    @State private var authChallenge = ""
+    @State private var authRelay = "wss://relay.damus.io"
+    @State private var authJson = ""
+
+    // Relay list
+    @State private var relayListInput = "wss://relay.damus.io read, wss://relay.nostr.band write"
+    @State private var relayListJson = ""
+
+    // SDK Client
+    @State private var clientRelayUrl = "wss://relay.damus.io"
+    @State private var clientEventJson = ""
+    @State private var clientStatus = ""
+    @State private var nostrClient: NostrClient? = nil
+
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
     }
@@ -623,6 +648,229 @@ struct ContentView: View {
                                     }
                                     .font(.caption.monospaced())
                                     .foregroundStyle(primaryText.opacity(0.84))
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("More Events", systemImage: "bolt.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Reaction (Kind 7)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Event ID (hex)", text: $reactionEventId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Author pubkey (hex)", text: $reactionAuthor)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                HStack {
+                                    TextField("Kind", value: $reactionKind, format: .number)
+                                        .textFieldStyle(RoundedTextFieldStyle())
+                                        .frame(width: 80)
+                                    TextField("Content (+, -, emoji)", text: $reactionContent)
+                                        .textFieldStyle(RoundedTextFieldStyle())
+                                }
+                                Button {
+                                    reactionJson = (try? createReaction(
+                                        secretKey: nsecKey,
+                                        eventIdHex: reactionEventId,
+                                        authorPubkeyHex: reactionAuthor,
+                                        eventKind: reactionKind,
+                                        content: reactionContent
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Reaction", systemImage: "face.smiling.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !reactionJson.isEmpty {
+                                    jsonBlock(reactionJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Repost (NIP-18)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextEditor(text: $repostEventJson)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                Button {
+                                    repostResultJson = (try? createRepost(secretKey: nsecKey, eventJson: repostEventJson)) ?? ""
+                                } label: {
+                                    Label("Create Repost", systemImage: "arrow.2.squarepath")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !repostResultJson.isEmpty {
+                                    jsonBlock(repostResultJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Deletion Request (NIP-09)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Event IDs (comma-separated hex)", text: $deleteEventIds)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Reason", text: $deleteReason)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let ids = deleteEventIds.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    deleteJson = (try? createDeletionRequest(secretKey: nsecKey, eventIdsHex: ids, reason: deleteReason)) ?? ""
+                                } label: {
+                                    Label("Request Deletion", systemImage: "trash.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !deleteJson.isEmpty {
+                                    jsonBlock(deleteJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Auth Event (NIP-42)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Challenge", text: $authChallenge)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Relay URL", text: $authRelay)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    authJson = (try? createAuthEvent(secretKey: nsecKey, challenge: authChallenge, relayUrl: authRelay)) ?? ""
+                                } label: {
+                                    Label("Create Auth", systemImage: "shield.lefthalf.filled")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !authJson.isEmpty {
+                                    jsonBlock(authJson)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Relay List (NIP-65)", systemImage: "network")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            Text("Format: url mode (read/write), comma-separated")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(primaryText)
+                            TextField("wss://relay.damus.io read, ...", text: $relayListInput)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let entries: [RelayEntry] = relayListInput.split(separator: ",").compactMap { item in
+                                    let parts = item.trimmingCharacters(in: .whitespaces).split(separator: " ", omittingEmptySubsequences: true)
+                                    guard parts.count >= 1 else { return nil }
+                                    let url = String(parts[0])
+                                    let mode = parts.count >= 2 ? String(parts[1]) : ""
+                                    return RelayEntry(url: url, mode: mode)
+                                }
+                                relayListJson = (try? createRelayList(secretKey: nsecKey, relays: entries)) ?? ""
+                            } label: {
+                                Label("Build Relay List", systemImage: "server.rack")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !relayListJson.isEmpty {
+                                jsonBlock(relayListJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Label("SDK Client", systemImage: "antenna.radiowaves.left.and.right")
+                                    .font(.headline)
+                                    .foregroundStyle(accentText)
+                                Spacer()
+                                Text("nostr-sdk")
+                                    .font(.caption.weight(.semibold))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(accentFill.opacity(colorScheme == .dark ? 0.18 : 0.12), in: Capsule())
+                                    .foregroundStyle(accentText)
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                TextField("Relay URL", text: $clientRelayUrl)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                HStack(spacing: 12) {
+                                    Button {
+                                        if nostrClient == nil {
+                                            nostrClient = NostrClient()
+                                        }
+                                        let _ = try? nostrClient?.addRelay(url: clientRelayUrl)
+                                        nostrClient?.connect()
+                                        clientStatus = "Connected to \(clientRelayUrl)"
+                                    } label: {
+                                        Label("Connect", systemImage: "link")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+
+                                    Button {
+                                        nostrClient?.disconnect()
+                                        clientStatus = "Disconnected"
+                                    } label: {
+                                        Label("Disconnect", systemImage: "link.badge.minus")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                }
+                                TextEditor(text: $clientEventJson)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                Button {
+                                    if let eventId = try? nostrClient?.publishEvent(eventJson: clientEventJson) {
+                                        clientStatus = "Published: \(eventId)"
+                                    } else {
+                                        clientStatus = "Publish failed"
+                                    }
+                                } label: {
+                                    Label("Publish Event", systemImage: "paperplane.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nostrClient == nil)
+                                if !clientStatus.isEmpty {
+                                    Text(clientStatus)
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(primaryText.opacity(0.84))
                                 }
                             }
                         }

@@ -237,6 +237,147 @@ pub fn nip21_decode(nostr_uri: String) -> Result<Nip19Result, NostrError> {
     ))
 }
 
+#[derive(uniffi::Record)]
+pub struct RelayEntry {
+    pub url: String,
+    pub mode: String,
+}
+
+#[uniffi::export]
+pub fn create_reaction(
+    secret_key: String,
+    event_id_hex: String,
+    author_pubkey_hex: String,
+    event_kind: u16,
+    content: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event_id = EventId::from_hex(&event_id_hex)?;
+    let author = PublicKey::from_hex(&author_pubkey_hex)?;
+    let kind = Kind::from(event_kind);
+    let event = EventBuilder::new(Kind::Reaction, content)
+        .tags([
+            Tag::event(event_id),
+            Tag::public_key(author),
+            Tag::parse(["k", &kind.as_u16().to_string()])?,
+        ])
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_repost(secret_key: String, event_json: String) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event = Event::from_json(event_json)?;
+    let repost = RepostBuilder::new(&event).finalize(&keys)?;
+    Ok(repost.as_json())
+}
+
+#[uniffi::export]
+pub fn create_relay_list(
+    secret_key: String,
+    relays: Vec<RelayEntry>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let list: Vec<(RelayUrl, Option<RelayMetadata>)> = relays
+        .into_iter()
+        .map(|r| {
+            let url = RelayUrl::parse(&r.url)?;
+            let meta = match r.mode.as_str() {
+                "read" => Some(RelayMetadata::Read),
+                "write" => Some(RelayMetadata::Write),
+                _ => None,
+            };
+            Ok((url, meta))
+        })
+        .collect::<Result<Vec<_>, Error>>()?;
+    let event = RelayList::new(list).finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_deletion_request(
+    secret_key: String,
+    event_ids_hex: Vec<String>,
+    reason: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let ids: Vec<EventId> = event_ids_hex
+        .into_iter()
+        .map(|hex| EventId::from_hex(&hex))
+        .collect::<Result<Vec<_>, _>>()?;
+    let request = EventDeletionRequest::new().ids(ids).reason(reason);
+    let event = request.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_auth_event(
+    secret_key: String,
+    challenge: String,
+    relay_url: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let relay = RelayUrl::parse(&relay_url)?;
+    let auth = ClientAuthentication::new(challenge, relay);
+    let event = auth.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+// Nostr SDK client wrapper
+
+use nostr_sdk::client::Client;
+use std::sync::Arc;
+use tokio::runtime::Runtime;
+
+#[derive(uniffi::Object)]
+pub struct NostrClient {
+    runtime: Runtime,
+    client: Client,
+}
+
+#[uniffi::export]
+impl NostrClient {
+    #[uniffi::constructor]
+    pub fn new() -> Arc<Self> {
+        let runtime = Runtime::new().expect("Failed to create Tokio runtime");
+        let client = Client::new();
+        Arc::new(Self { runtime, client })
+    }
+
+    pub fn add_relay(&self, url: String) -> Result<bool, NostrError> {
+        self.runtime.block_on(async {
+            self.client
+                .add_relay(&url)
+                .await
+                .map_err(|e| NostrError::Invalid(e.to_string()))
+        })
+    }
+
+    pub fn connect(&self) {
+        self.runtime.block_on(async {
+            self.client.connect().await;
+        });
+    }
+
+    pub fn publish_event(&self, event_json: String) -> Result<String, NostrError> {
+        let event = Event::from_json(event_json)?;
+        let output = self.runtime.block_on(async {
+            self.client
+                .send_event(&event)
+                .await
+                .map_err(|e| NostrError::Invalid(e.to_string()))
+        })?;
+        Ok(output.id().to_hex())
+    }
+
+    pub fn disconnect(&self) {
+        self.runtime.block_on(async {
+            self.client.disconnect().await;
+        });
+    }
+}
+
 #[uniffi::export]
 fn rust_hello() -> String {
     "Hello from Rust!".to_string()
