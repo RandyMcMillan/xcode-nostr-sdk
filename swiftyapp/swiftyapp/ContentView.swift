@@ -318,6 +318,32 @@ struct ContentView: View {
     @State private var gitIssueLabels = "bug,urgent"
     @State private var gitIssueJson = ""
 
+    // NIP-22 Comments
+    @State private var commentContent = "Great post!"
+    @State private var commentTargetId = ""
+    @State private var commentTargetKind: UInt16 = 1
+    @State private var commentTargetAuthor = ""
+    @State private var commentRootId = ""
+    @State private var commentJson = ""
+
+    // NIP-35 Torrents
+    @State private var torrentTitle = "My Torrent"
+    @State private var torrentDescription = "A cool file"
+    @State private var torrentInfoHash = ""
+    @State private var torrentFiles = "file.txt:1024"
+    @State private var torrentTrackers = "https://tracker.example.com"
+    @State private var torrentCategories = "video,movie"
+    @State private var torrentHashtags = "open-source"
+    @State private var torrentJson = ""
+
+    // NIP-60 Cashu Wallet
+    @State private var cashuWalletPrivkey = ""
+    @State private var cashuMints = "https://mint.example.com"
+    @State private var cashuWalletJson = ""
+    @State private var cashuTokenMint = ""
+    @State private var cashuTokenProofs = "[{\"id\":\"abc\",\"amount\":100,\"secret\":\"secret\",\"c\":\"cval\"}]"
+    @State private var cashuTokenJson = ""
+
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
     }
@@ -2803,6 +2829,164 @@ struct ContentView: View {
                             .disabled(nsecKey.isEmpty || gitRepoPubkey.isEmpty)
                             if !gitIssueJson.isEmpty {
                                 jsonBlock(gitIssueJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Comments (NIP-22)", systemImage: "bubble.left.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextEditor(text: $commentContent)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            TextField("Target Event ID (hex)", text: $commentTargetId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Target Kind", value: $commentTargetKind, format: .number)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Target Author (hex)", text: $commentTargetAuthor)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Root Event ID (optional)", text: $commentRootId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let rootOpt: String? = commentRootId.isEmpty ? nil : commentRootId
+                                commentJson = (try? createCommentEvent(
+                                    secretKey: nsecKey,
+                                    content: commentContent,
+                                    targetEventIdHex: commentTargetId,
+                                    targetKind: commentTargetKind,
+                                    targetAuthorPubkeyHex: commentTargetAuthor,
+                                    rootEventIdHex: rootOpt
+                                )) ?? ""
+                            } label: {
+                                Label("Create Comment", systemImage: "bubble.left.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty || commentTargetId.isEmpty || commentTargetAuthor.isEmpty)
+                            if !commentJson.isEmpty {
+                                jsonBlock(commentJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Torrents (NIP-35)", systemImage: "arrow.down.circle.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Title", text: $torrentTitle)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextEditor(text: $torrentDescription)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            TextField("Info Hash (hex)", text: $torrentInfoHash)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Files (name:size, ...)", text: $torrentFiles)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Trackers (comma-separated URLs)", text: $torrentTrackers)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Categories (comma-separated)", text: $torrentCategories)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Hashtags (comma-separated)", text: $torrentHashtags)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let files = torrentFiles.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                let trackers = torrentTrackers.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                let cats = torrentCategories.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                let tags = torrentHashtags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                torrentJson = (try? createTorrentEvent(
+                                    secretKey: nsecKey,
+                                    title: torrentTitle,
+                                    description: torrentDescription,
+                                    infoHashHex: torrentInfoHash,
+                                    files: files,
+                                    trackers: trackers,
+                                    categories: cats,
+                                    hashtags: tags
+                                )) ?? ""
+                            } label: {
+                                Label("Create Torrent", systemImage: "arrow.down.circle.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty || torrentInfoHash.isEmpty)
+                            if !torrentJson.isEmpty {
+                                jsonBlock(torrentJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Cashu Wallet (NIP-60)", systemImage: "wallet.pass.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Wallet Privkey", text: $cashuWalletPrivkey)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Mints (comma-separated URLs)", text: $cashuMints)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let mints = cashuMints.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                cashuWalletJson = (try? createCashuWallet(
+                                    secretKey: nsecKey,
+                                    walletPrivkey: cashuWalletPrivkey,
+                                    mintUrls: mints
+                                )) ?? ""
+                            } label: {
+                                Label("Create Wallet", systemImage: "wallet.pass.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty || cashuWalletPrivkey.isEmpty)
+                            if !cashuWalletJson.isEmpty {
+                                jsonBlock(cashuWalletJson)
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            TextField("Token Mint URL", text: $cashuTokenMint)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextEditor(text: $cashuTokenProofs)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            Button {
+                                cashuTokenJson = (try? createCashuToken(
+                                    secretKey: nsecKey,
+                                    mintUrl: cashuTokenMint,
+                                    proofsJson: cashuTokenProofs
+                                )) ?? ""
+                            } label: {
+                                Label("Create Token", systemImage: "bitcoinsign.circle.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty || cashuTokenMint.isEmpty)
+                            if !cashuTokenJson.isEmpty {
+                                jsonBlock(cashuTokenJson)
                             }
                         }
                     }

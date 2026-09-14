@@ -352,6 +352,21 @@ RustBuffer uniffi_rustylib_fn_func_create_badge_definition(RustBuffer secret_key
 RustBuffer uniffi_rustylib_fn_func_create_bookmarks(RustBuffer secret_key, RustBuffer event_ids_hex, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CASHU_TOKEN
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CASHU_TOKEN
+RustBuffer uniffi_rustylib_fn_func_create_cashu_token(RustBuffer secret_key, RustBuffer mint_url, RustBuffer proofs_json, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CASHU_WALLET
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CASHU_WALLET
+RustBuffer uniffi_rustylib_fn_func_create_cashu_wallet(RustBuffer secret_key, RustBuffer wallet_privkey, RustBuffer mint_urls, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_COMMENT_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_COMMENT_EVENT
+RustBuffer uniffi_rustylib_fn_func_create_comment_event(RustBuffer secret_key, RustBuffer content, RustBuffer target_event_id_hex, uint16_t target_kind, RustBuffer target_author_pubkey_hex, RustBuffer root_event_id_hex, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CONTACT_LIST
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CONTACT_LIST
 RustBuffer uniffi_rustylib_fn_func_create_contact_list(RustBuffer secret_key, RustBuffer pubkeys_hex, RustCallStatus *_Nonnull out_status
@@ -495,6 +510,11 @@ RustBuffer uniffi_rustylib_fn_func_create_text_note(RustBuffer secret_key, RustB
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_THREAD_REPLY
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_THREAD_REPLY
 RustBuffer uniffi_rustylib_fn_func_create_thread_reply(RustBuffer secret_key, RustBuffer content, RustBuffer root_event_id_hex, RustBuffer reply_to_event_id_hex, RustBuffer reply_to_author_pubkey_hex, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_TORRENT_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_TORRENT_EVENT
+RustBuffer uniffi_rustylib_fn_func_create_torrent_event(RustBuffer secret_key, RustBuffer title, RustBuffer description, RustBuffer info_hash_hex, RustBuffer files, RustBuffer trackers, RustBuffer categories, RustBuffer hashtags, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_USER_STATUS
@@ -1022,6 +1042,24 @@ uint16_t uniffi_rustylib_checksum_func_create_bookmarks(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CASHU_TOKEN
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CASHU_TOKEN
+uint16_t uniffi_rustylib_checksum_func_create_cashu_token(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CASHU_WALLET
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CASHU_WALLET
+uint16_t uniffi_rustylib_checksum_func_create_cashu_wallet(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_COMMENT_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_COMMENT_EVENT
+uint16_t uniffi_rustylib_checksum_func_create_comment_event(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CONTACT_LIST
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CONTACT_LIST
 uint16_t uniffi_rustylib_checksum_func_create_contact_list(void
@@ -1193,6 +1231,12 @@ uint16_t uniffi_rustylib_checksum_func_create_text_note(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_THREAD_REPLY
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_THREAD_REPLY
 uint16_t uniffi_rustylib_checksum_func_create_thread_reply(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_TORRENT_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_TORRENT_EVENT
+uint16_t uniffi_rustylib_checksum_func_create_torrent_event(void
     
 );
 #endif

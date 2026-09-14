@@ -1411,6 +1411,101 @@ pub fn event_tag_values(event_json: String, tag_name: String) -> Result<Vec<Stri
 }
 
 #[uniffi::export]
+pub fn create_comment_event(
+    secret_key: String,
+    content: String,
+    target_event_id_hex: String,
+    target_kind: u16,
+    target_author_pubkey_hex: String,
+    root_event_id_hex: Option<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event_id = EventId::from_hex(&target_event_id_hex)?;
+    let author = PublicKey::from_hex(&target_author_pubkey_hex)?;
+    let kind = Kind::from(target_kind);
+    let target = CommentTarget::event(event_id, kind, Some(author), None);
+    let mut builder = CommentBuilder::new(content, target);
+    if let Some(root_hex) = root_event_id_hex {
+        let root_id = EventId::from_hex(&root_hex)?;
+        let root_target = CommentTarget::event(root_id, kind, Some(author), None);
+        builder = builder.root(root_target);
+    }
+    let event = builder.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_torrent_event(
+    secret_key: String,
+    title: String,
+    description: String,
+    info_hash_hex: String,
+    files: Vec<String>,
+    trackers: Vec<String>,
+    categories: Vec<String>,
+    hashtags: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let info_hash: bitcoin_hashes::sha1::Hash = info_hash_hex.parse()
+        .map_err(|_| NostrError::Invalid("invalid info hash hex".to_string()))?;
+    let torrent_files: Vec<TorrentFile> = files.into_iter().filter_map(|f| {
+        let parts: Vec<&str> = f.splitn(2, ':').collect();
+        if parts.len() == 2 {
+            if let Ok(size) = parts[1].parse::<u64>() {
+                return Some(TorrentFile { name: parts[0].to_string(), size });
+            }
+        }
+        None
+    }).collect();
+    let tracker_urls: Vec<Url> = trackers.into_iter()
+        .map(|url| Url::parse(&url).map_err(|e| NostrError::Invalid(e.to_string())))
+        .collect::<Result<Vec<_>, _>>()?;
+    let torrent = Torrent {
+        title,
+        description,
+        info_hash,
+        files: torrent_files,
+        trackers: tracker_urls,
+        categories,
+        hashtags,
+    };
+    let event = torrent.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_cashu_wallet(
+    secret_key: String,
+    wallet_privkey: String,
+    mint_urls: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let mints: Vec<Url> = mint_urls.into_iter()
+        .map(|url| Url::parse(&url).map_err(|e| NostrError::Invalid(e.to_string())))
+        .collect::<Result<Vec<_>, _>>()?;
+    let wallet = WalletEvent::new(wallet_privkey, mints);
+    let prepared = wallet.prepare(keys.secret_key(), &keys.public_key())?;
+    let event = prepared.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_cashu_token(
+    secret_key: String,
+    mint_url: String,
+    proofs_json: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let mint = Url::parse(&mint_url).map_err(|e| NostrError::Invalid(e.to_string()))?;
+    let proofs: Vec<CashuProof> = serde_json::from_str(&proofs_json)
+        .map_err(|e| NostrError::Invalid(format!("invalid proofs JSON: {}", e)))?;
+    let token = TokenEvent::new(mint, proofs);
+    let prepared = token.prepare(keys.secret_key(), &keys.public_key())?;
+    let event = prepared.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
 fn rust_hello() -> String {
     "Hello from Rust!".to_string()
 }

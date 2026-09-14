@@ -1314,6 +1314,36 @@ public func createBookmarks(secretKey: String, eventIdsHex: [String])throws  -> 
     )
 })
 }
+public func createCashuToken(secretKey: String, mintUrl: String, proofsJson: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_cashu_token(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(mintUrl),
+        FfiConverterString.lower(proofsJson),$0
+    )
+})
+}
+public func createCashuWallet(secretKey: String, walletPrivkey: String, mintUrls: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_cashu_wallet(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(walletPrivkey),
+        FfiConverterSequenceString.lower(mintUrls),$0
+    )
+})
+}
+public func createCommentEvent(secretKey: String, content: String, targetEventIdHex: String, targetKind: UInt16, targetAuthorPubkeyHex: String, rootEventIdHex: String?)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_comment_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(content),
+        FfiConverterString.lower(targetEventIdHex),
+        FfiConverterUInt16.lower(targetKind),
+        FfiConverterString.lower(targetAuthorPubkeyHex),
+        FfiConverterOptionString.lower(rootEventIdHex),$0
+    )
+})
+}
 public func createContactList(secretKey: String, pubkeysHex: [String])throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_contact_list(
@@ -1592,6 +1622,20 @@ public func createThreadReply(secretKey: String, content: String, rootEventIdHex
         FfiConverterString.lower(rootEventIdHex),
         FfiConverterString.lower(replyToEventIdHex),
         FfiConverterString.lower(replyToAuthorPubkeyHex),$0
+    )
+})
+}
+public func createTorrentEvent(secretKey: String, title: String, description: String, infoHashHex: String, files: [String], trackers: [String], categories: [String], hashtags: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_torrent_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(title),
+        FfiConverterString.lower(description),
+        FfiConverterString.lower(infoHashHex),
+        FfiConverterSequenceString.lower(files),
+        FfiConverterSequenceString.lower(trackers),
+        FfiConverterSequenceString.lower(categories),
+        FfiConverterSequenceString.lower(hashtags),$0
     )
 })
 }
@@ -1947,6 +1991,15 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_bookmarks() != 33227) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_cashu_token() != 59650) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_cashu_wallet() != 9195) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_comment_event() != 18113) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_contact_list() != 61521) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -2032,6 +2085,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_thread_reply() != 51468) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_torrent_event() != 43317) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_user_status() != 58837) {
