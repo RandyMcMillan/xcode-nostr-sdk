@@ -143,6 +143,101 @@ pub fn event_id(event_json: String) -> Result<String, NostrError> {
 }
 
 #[uniffi::export]
+pub fn nip04_encrypt(
+    secret_key: String,
+    recipient_pubkey: String,
+    content: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let pk = PublicKey::from_hex(&recipient_pubkey)?;
+    Ok(keys.nip04_encrypt(&pk, &content)?)
+}
+
+#[uniffi::export]
+pub fn nip04_decrypt(
+    secret_key: String,
+    sender_pubkey: String,
+    encrypted_content: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let pk = PublicKey::from_hex(&sender_pubkey)?;
+    Ok(keys.nip04_decrypt(&pk, &encrypted_content)?)
+}
+
+#[uniffi::export]
+pub fn nip44_encrypt(
+    secret_key: String,
+    recipient_pubkey: String,
+    content: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let pk = PublicKey::from_hex(&recipient_pubkey)?;
+    Ok(keys.nip44_encrypt(&pk, &content)?)
+}
+
+#[uniffi::export]
+pub fn nip44_decrypt(
+    secret_key: String,
+    sender_pubkey: String,
+    payload: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let pk = PublicKey::from_hex(&sender_pubkey)?;
+    Ok(keys.nip44_decrypt(&pk, &payload)?)
+}
+
+#[uniffi::export]
+pub fn create_contact_list(
+    secret_key: String,
+    pubkeys_hex: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let contacts: Vec<Contact> = pubkeys_hex
+        .into_iter()
+        .map(|hex| Ok(Contact::new(PublicKey::from_hex(&hex)?)))
+        .collect::<Result<Vec<Contact>, Error>>()?;
+    let event = ContactListBuilder::new(contacts).finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn nip21_encode(data_hex: String, prefix: String) -> Result<String, NostrError> {
+    match prefix.as_str() {
+        "npub" => {
+            let pk = PublicKey::from_hex(&data_hex)?;
+            Ok(pk.to_nostr_uri()?)
+        }
+        "note" => {
+            let id = EventId::from_hex(&data_hex)?;
+            Ok(id.to_nostr_uri()?)
+        }
+        _ => Err(NostrError::Encoding(format!(
+            "Unsupported NIP-21 prefix: {}. Use npub or note.",
+            prefix
+        ))),
+    }
+}
+
+#[uniffi::export]
+pub fn nip21_decode(nostr_uri: String) -> Result<Nip19Result, NostrError> {
+    if let Ok(pk) = PublicKey::from_nostr_uri(&nostr_uri) {
+        return Ok(Nip19Result {
+            prefix: "npub".to_string(),
+            data: pk.to_hex(),
+        });
+    }
+    if let Ok(id) = EventId::from_nostr_uri(&nostr_uri) {
+        return Ok(Nip19Result {
+            prefix: "note".to_string(),
+            data: id.to_hex(),
+        });
+    }
+    Err(NostrError::Invalid(
+        "Unsupported NIP-21 URI variant".to_string(),
+    ))
+}
+
+#[uniffi::export]
 fn rust_hello() -> String {
     "Hello from Rust!".to_string()
 }

@@ -30,6 +30,24 @@ struct ContentView: View {
     @State private var verifyResult: Bool?
     @State private var extractedEventId = ""
 
+    // Encryption
+    @State private var encryptRecipient = ""
+    @State private var encryptContent = ""
+    @State private var encryptedOutput = ""
+    @State private var decryptSender = ""
+    @State private var decryptPayload = ""
+    @State private var decryptedOutput = ""
+
+    // Contact list
+    @State private var contactListPubkeys = ""
+    @State private var contactListJson = ""
+
+    // NIP-21
+    @State private var nip21HexInput = ""
+    @State private var nip21Prefix = "npub"
+    @State private var nip21UriInput = ""
+    @State private var nip21Result: Nip19Result? = nil
+
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
     }
@@ -419,6 +437,192 @@ struct ContentView: View {
                                     Text("Event ID: \(extractedEventId)")
                                         .font(.caption.monospaced())
                                         .foregroundStyle(primaryText.opacity(0.84))
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Encryption", systemImage: "lock.shield.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Encrypt (NIP-44)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Recipient pubkey (hex)", text: $encryptRecipient)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Content", text: $encryptContent)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    encryptedOutput = (try? nip44Encrypt(
+                                        secretKey: nsecKey,
+                                        recipientPubkey: encryptRecipient,
+                                        content: encryptContent
+                                    )) ?? ""
+                                } label: {
+                                    Label("Encrypt", systemImage: "lock.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !encryptedOutput.isEmpty {
+                                    keyRow(label: "Encrypted payload", value: encryptedOutput)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Decrypt (NIP-44)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Sender pubkey (hex)", text: $decryptSender)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Payload", text: $decryptPayload)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    decryptedOutput = (try? nip44Decrypt(
+                                        secretKey: nsecKey,
+                                        senderPubkey: decryptSender,
+                                        payload: decryptPayload
+                                    )) ?? ""
+                                } label: {
+                                    Label("Decrypt", systemImage: "lock.open.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !decryptedOutput.isEmpty {
+                                    keyRow(label: "Decrypted content", value: decryptedOutput)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Legacy NIP-04")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                HStack(spacing: 12) {
+                                    Button {
+                                        encryptedOutput = (try? nip04Encrypt(
+                                            secretKey: nsecKey,
+                                            recipientPubkey: encryptRecipient,
+                                            content: encryptContent
+                                        )) ?? ""
+                                    } label: {
+                                        Label("Encrypt", systemImage: "lock.fill")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                    .disabled(nsecKey.isEmpty)
+
+                                    Button {
+                                        decryptedOutput = (try? nip04Decrypt(
+                                            secretKey: nsecKey,
+                                            senderPubkey: decryptSender,
+                                            encryptedContent: decryptPayload
+                                        )) ?? ""
+                                    } label: {
+                                        Label("Decrypt", systemImage: "lock.open.fill")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                    .disabled(nsecKey.isEmpty)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Contact List", systemImage: "person.2.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            Text("Comma-separated pubkeys (hex)")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(primaryText)
+                            TextField("pubkey1, pubkey2, ...", text: $contactListPubkeys)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let keys = contactListPubkeys
+                                    .split(separator: ",")
+                                    .map { $0.trimmingCharacters(in: .whitespaces) }
+                                    .filter { !$0.isEmpty }
+                                contactListJson = (try? createContactList(secretKey: nsecKey, pubkeysHex: keys)) ?? ""
+                            } label: {
+                                Label("Build Contact List", systemImage: "person.crop.circle.badge.plus")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !contactListJson.isEmpty {
+                                jsonBlock(contactListJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("NIP-21 URI", systemImage: "link")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Encode")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Hex data", text: $nip21HexInput)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Picker("Prefix", selection: $nip21Prefix) {
+                                    Text("npub").tag("npub")
+                                    Text("note").tag("note")
+                                }
+                                .pickerStyle(.segmented)
+                                Button {
+                                    nip21Result = Nip19Result(
+                                        prefix: nip21Prefix,
+                                        data: (try? nip21Encode(dataHex: nip21HexInput, prefix: nip21Prefix)) ?? ""
+                                    )
+                                } label: {
+                                    Label("Encode URI", systemImage: "arrow.up.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if let res = nip21Result, !res.data.isEmpty {
+                                    keyRow(label: "URI", value: res.data)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Decode")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("nostr:...", text: $nip21UriInput)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    nip21Result = try? nip21Decode(nostrUri: nip21UriInput)
+                                } label: {
+                                    Label("Decode URI", systemImage: "arrow.down.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if let res = nip21Result, !res.data.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Prefix: \(res.prefix)")
+                                        Text("Data: \(res.data)")
+                                    }
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(primaryText.opacity(0.84))
                                 }
                             }
                         }

@@ -582,6 +582,36 @@ extension NostrError: Foundation.LocalizedError {
         String(reflecting: self)
     }
 }
+
+fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
+    typealias SwiftType = [String]
+
+    public static func write(_ value: [String], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterString.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [String] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [String]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterString.read(from: &buf))
+        }
+        return seq
+    }
+}
+public func createContactList(secretKey: String, pubkeysHex: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_contact_list(
+        FfiConverterString.lower(secretKey),
+        FfiConverterSequenceString.lower(pubkeysHex),$0
+    )
+})
+}
 public func createMetadataEvent(secretKey: String, name: String, about: String, picture: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_metadata_event(
@@ -620,6 +650,24 @@ public func getPublicKey(secretKey: String)throws  -> String {
     )
 })
 }
+public func nip04Decrypt(secretKey: String, senderPubkey: String, encryptedContent: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip04_decrypt(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(senderPubkey),
+        FfiConverterString.lower(encryptedContent),$0
+    )
+})
+}
+public func nip04Encrypt(secretKey: String, recipientPubkey: String, content: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip04_encrypt(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(recipientPubkey),
+        FfiConverterString.lower(content),$0
+    )
+})
+}
 public func nip19Decode(bech32: String)throws  -> Nip19Result {
     return try  FfiConverterTypeNip19Result.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_nip19_decode(
@@ -632,6 +680,39 @@ public func nip19Encode(dataHex: String, prefix: String)throws  -> String {
     uniffi_rustylib_fn_func_nip19_encode(
         FfiConverterString.lower(dataHex),
         FfiConverterString.lower(prefix),$0
+    )
+})
+}
+public func nip21Decode(nostrUri: String)throws  -> Nip19Result {
+    return try  FfiConverterTypeNip19Result.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip21_decode(
+        FfiConverterString.lower(nostrUri),$0
+    )
+})
+}
+public func nip21Encode(dataHex: String, prefix: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip21_encode(
+        FfiConverterString.lower(dataHex),
+        FfiConverterString.lower(prefix),$0
+    )
+})
+}
+public func nip44Decrypt(secretKey: String, senderPubkey: String, payload: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip44_decrypt(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(senderPubkey),
+        FfiConverterString.lower(payload),$0
+    )
+})
+}
+public func nip44Encrypt(secretKey: String, recipientPubkey: String, content: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip44_encrypt(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(recipientPubkey),
+        FfiConverterString.lower(content),$0
     )
 })
 }
@@ -672,6 +753,9 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_contact_list() != 61521) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_metadata_event() != 38004) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -687,10 +771,28 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_get_public_key() != 23619) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_nip04_decrypt() != 22343) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip04_encrypt() != 31336) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_nip19_decode() != 2298) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_nip19_encode() != 14456) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip21_decode() != 61160) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip21_encode() != 39998) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip44_decrypt() != 10966) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip44_encrypt() != 34254) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_rust_add() != 47653) {
