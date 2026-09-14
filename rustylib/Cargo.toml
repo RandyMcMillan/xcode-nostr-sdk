@@ -12,6 +12,8 @@ name = "uniffi-bindgen"
 path = "uniffi-bindgen.rs"
 
 [dependencies]
+nostr = { version = "0.45.5", features = ["all-nips"] }
+nostr-sdk = { version = "0.45.3", features = ["local-relay"] }
 uniffi = { version = "0.28.0", features = [ "cli" ] }
 
 [build-dependencies]
