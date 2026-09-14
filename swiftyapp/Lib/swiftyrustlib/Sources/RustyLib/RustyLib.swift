@@ -879,6 +879,27 @@ extension NostrError: Foundation.LocalizedError {
     }
 }
 
+fileprivate struct FfiConverterOptionUInt16: FfiConverterRustBuffer {
+    typealias SwiftType = UInt16?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterUInt16.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterUInt16.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
 fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
     typealias SwiftType = String?
 
@@ -1149,6 +1170,13 @@ public func createZapRequest(secretKey: String, recipientPubkeyHex: String, rela
     )
 })
 }
+public func eventContent(eventJson: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_content(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
 public func eventCreatedAt(eventJson: String)throws  -> UInt64 {
     return try  FfiConverterUInt64.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_event_created_at(
@@ -1173,6 +1201,13 @@ public func eventKindValue(eventJson: String)throws  -> UInt16 {
 public func eventPubkeyHex(eventJson: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_event_pubkey_hex(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func eventSignatureValid(eventJson: String)throws  -> Bool {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_signature_valid(
         FfiConverterString.lower(eventJson),$0
     )
 })
@@ -1228,6 +1263,34 @@ public func nip19Encode(dataHex: String, prefix: String)throws  -> String {
     uniffi_rustylib_fn_func_nip19_encode(
         FfiConverterString.lower(dataHex),
         FfiConverterString.lower(prefix),$0
+    )
+})
+}
+public func nip19EncodeCoordinate(kind: UInt16, pubkeyHex: String, identifier: String, relayUrls: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_encode_coordinate(
+        FfiConverterUInt16.lower(kind),
+        FfiConverterString.lower(pubkeyHex),
+        FfiConverterString.lower(identifier),
+        FfiConverterSequenceString.lower(relayUrls),$0
+    )
+})
+}
+public func nip19EncodeEvent(eventIdHex: String, authorPubkeyHex: String?, kind: UInt16?, relayUrls: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_encode_event(
+        FfiConverterString.lower(eventIdHex),
+        FfiConverterOptionString.lower(authorPubkeyHex),
+        FfiConverterOptionUInt16.lower(kind),
+        FfiConverterSequenceString.lower(relayUrls),$0
+    )
+})
+}
+public func nip19EncodeProfile(pubkeyHex: String, relayUrls: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_encode_profile(
+        FfiConverterString.lower(pubkeyHex),
+        FfiConverterSequenceString.lower(relayUrls),$0
     )
 })
 }
@@ -1375,6 +1438,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_zap_request() != 46769) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_event_content() != 63454) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_event_created_at() != 26784) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1385,6 +1451,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_event_pubkey_hex() != 60026) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_signature_valid() != 1429) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_filter_matches_event() != 62926) {
@@ -1406,6 +1475,15 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_nip19_encode() != 14456) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_encode_coordinate() != 62620) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_encode_event() != 46806) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_encode_profile() != 10391) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_nip21_decode() != 61160) {

@@ -147,6 +147,26 @@ struct ContentView: View {
     @State private var bookmarkEventIds = ""
     @State private var bookmarkJson = ""
 
+    // Event Utilities
+    @State private var utilEventInput = ""
+    @State private var utilContent = ""
+    @State private var utilSigValid: Bool? = nil
+
+    // NIP-19 Advanced Encoding
+    @State private var neventId = ""
+    @State private var neventAuthor = ""
+    @State private var neventKind: UInt16 = 1
+    @State private var neventRelays = ""
+    @State private var neventResult = ""
+    @State private var nprofilePubkey = ""
+    @State private var nprofileRelays = ""
+    @State private var nprofileResult = ""
+    @State private var naddrKind: UInt16 = 30023
+    @State private var naddrPubkey = ""
+    @State private var naddrIdentifier = "my-article"
+    @State private var naddrRelays = ""
+    @State private var naddrResult = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -1408,6 +1428,152 @@ struct ContentView: View {
                                 .disabled(nsecKey.isEmpty)
                                 if !bookmarkJson.isEmpty {
                                     jsonBlock(bookmarkJson)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Event Utilities", systemImage: "wrench.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextEditor(text: $utilEventInput)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            HStack(spacing: 12) {
+                                Button {
+                                    utilContent = (try? eventContent(eventJson: utilEventInput)) ?? ""
+                                } label: {
+                                    Label("Get Content", systemImage: "doc.text")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+
+                                Button {
+                                    if let result = try? eventSignatureValid(eventJson: utilEventInput) {
+                                        utilSigValid = result
+                                    } else {
+                                        utilSigValid = nil
+                                    }
+                                } label: {
+                                    Label("Check Sig", systemImage: "checkmark.shield")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                            }
+                            if !utilContent.isEmpty {
+                                keyRow(label: "Content", value: utilContent)
+                            }
+                            if let valid = utilSigValid {
+                                Text(valid ? "Signature valid ✓" : "Signature invalid ✗")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(valid ? .green : .red)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("NIP-19 Advanced Encoding", systemImage: "qrcode")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("nevent")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Event ID (hex)", text: $neventId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Author (hex, optional)", text: $neventAuthor)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Kind", value: $neventKind, format: .number)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Relays (comma-separated)", text: $neventRelays)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let authorOpt: String? = neventAuthor.isEmpty ? nil : neventAuthor
+                                    let relays = neventRelays.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    neventResult = (try? nip19EncodeEvent(
+                                        eventIdHex: neventId,
+                                        authorPubkeyHex: authorOpt,
+                                        kind: neventKind,
+                                        relayUrls: relays
+                                    )) ?? ""
+                                } label: {
+                                    Label("Encode nevent", systemImage: "qrcode")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if !neventResult.isEmpty {
+                                    keyRow(label: "nevent", value: neventResult)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("nprofile")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Pubkey (hex)", text: $nprofilePubkey)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Relays (comma-separated)", text: $nprofileRelays)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let relays = nprofileRelays.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    nprofileResult = (try? nip19EncodeProfile(
+                                        pubkeyHex: nprofilePubkey,
+                                        relayUrls: relays
+                                    )) ?? ""
+                                } label: {
+                                    Label("Encode nprofile", systemImage: "qrcode")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if !nprofileResult.isEmpty {
+                                    keyRow(label: "nprofile", value: nprofileResult)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("naddr")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Kind", value: $naddrKind, format: .number)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Pubkey (hex)", text: $naddrPubkey)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Identifier (d tag)", text: $naddrIdentifier)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Relays (comma-separated)", text: $naddrRelays)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let relays = naddrRelays.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    naddrResult = (try? nip19EncodeCoordinate(
+                                        kind: naddrKind,
+                                        pubkeyHex: naddrPubkey,
+                                        identifier: naddrIdentifier,
+                                        relayUrls: relays
+                                    )) ?? ""
+                                } label: {
+                                    Label("Encode naddr", systemImage: "qrcode")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if !naddrResult.isEmpty {
+                                    keyRow(label: "naddr", value: naddrResult)
                                 }
                             }
                         }

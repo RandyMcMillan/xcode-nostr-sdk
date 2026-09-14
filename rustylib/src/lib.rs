@@ -622,6 +622,72 @@ pub fn create_bookmarks(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn event_content(event_json: String) -> Result<String, NostrError> {
+    let event = Event::from_json(event_json)?;
+    Ok(event.content)
+}
+
+#[uniffi::export]
+pub fn event_signature_valid(event_json: String) -> Result<bool, NostrError> {
+    let event = Event::from_json(event_json)?;
+    Ok(event.verify_signature())
+}
+
+#[uniffi::export]
+pub fn nip19_encode_event(
+    event_id_hex: String,
+    author_pubkey_hex: Option<String>,
+    kind: Option<u16>,
+    relay_urls: Vec<String>,
+) -> Result<String, NostrError> {
+    let event_id = EventId::from_hex(&event_id_hex)?;
+    let mut nevent = Nip19Event::new(event_id);
+    if let Some(hex) = author_pubkey_hex {
+        nevent = nevent.author(PublicKey::from_hex(&hex)?);
+    }
+    if let Some(k) = kind {
+        nevent = nevent.kind(Kind::from(k));
+    }
+    let relays: Vec<RelayUrl> = relay_urls
+        .into_iter()
+        .map(|url| RelayUrl::parse(&url))
+        .collect::<Result<Vec<_>, _>>()?;
+    nevent = nevent.relays(relays);
+    Ok(nevent.to_bech32()?)
+}
+
+#[uniffi::export]
+pub fn nip19_encode_profile(
+    pubkey_hex: String,
+    relay_urls: Vec<String>,
+) -> Result<String, NostrError> {
+    let pk = PublicKey::from_hex(&pubkey_hex)?;
+    let relays: Vec<RelayUrl> = relay_urls
+        .into_iter()
+        .map(|url| RelayUrl::parse(&url))
+        .collect::<Result<Vec<_>, _>>()?;
+    let profile = Nip19Profile::new(pk, relays);
+    Ok(profile.to_bech32()?)
+}
+
+#[uniffi::export]
+pub fn nip19_encode_coordinate(
+    kind: u16,
+    pubkey_hex: String,
+    identifier: String,
+    relay_urls: Vec<String>,
+) -> Result<String, NostrError> {
+    let pk = PublicKey::from_hex(&pubkey_hex)?;
+    let coordinate = Coordinate::new(Kind::from(kind), pk).identifier(identifier);
+    let relays: Vec<RelayUrl> = relay_urls
+        .into_iter()
+        .map(|url| RelayUrl::parse(&url))
+        .collect::<Result<Vec<_>, _>>()?;
+    let naddr = Nip19Coordinate::new(coordinate, relays);
+    Ok(naddr.to_bech32()?)
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;
