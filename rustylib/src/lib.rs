@@ -412,11 +412,50 @@ pub fn event_pubkey_hex(event_json: String) -> Result<String, NostrError> {
     Ok(event.pubkey.to_hex())
 }
 
+#[derive(uniffi::Record)]
+pub struct Nip05ProfileResult {
+    pub pubkey_hex: String,
+    pub relays: Vec<String>,
+}
+
+#[uniffi::export]
+pub fn verify_nip05(pubkey_hex: String, address: String, json_raw: String) -> Result<bool, NostrError> {
+    let pk = PublicKey::from_hex(&pubkey_hex)?;
+    let addr = Nip05Address::parse(&address)?;
+    Ok(verify_from_raw_json(&pk, &addr, &json_raw)?)
+}
+
+#[uniffi::export]
+pub fn parse_nip05_profile(address: String, json_raw: String) -> Result<Nip05ProfileResult, NostrError> {
+    let addr = Nip05Address::parse(&address)?;
+    let profile = Nip05Profile::from_raw_json(&addr, &json_raw)?;
+    Ok(Nip05ProfileResult {
+        pubkey_hex: profile.public_key.to_hex(),
+        relays: profile.relays.into_iter().map(|r| r.to_string()).collect(),
+    })
+}
+
+#[uniffi::export]
+pub fn create_gift_wrap(
+    secret_key: String,
+    recipient_pubkey_hex: String,
+    rumor_kind: u16,
+    rumor_content: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let recipient = PublicKey::from_hex(&recipient_pubkey_hex)?;
+    let rumor = EventBuilder::new(Kind::from(rumor_kind), rumor_content)
+        .finalize_unsigned(keys.public_key());
+    let gift_wrap = GiftWrapBuilder::new(recipient, rumor).finalize(&keys)?;
+    Ok(gift_wrap.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;
 use std::sync::Arc;
 use tokio::runtime::Runtime;
+use std::time::Duration;
 
 #[derive(uniffi::Object)]
 pub struct NostrClient {
@@ -470,6 +509,20 @@ impl NostrClient {
             let relays = self.client.relays().all().await;
             relays.keys().map(|url| url.to_string()).collect()
         })
+    }
+
+    pub fn fetch_events(&self, filter_json: String, timeout_secs: u64) -> Result<Vec<String>, NostrError> {
+        let filter = Filter::from_json(filter_json)?;
+        let events = self.runtime.block_on(async {
+            let fetch = self.client.fetch_events(filter);
+            let fetch = if timeout_secs > 0 {
+                fetch.timeout(Duration::from_secs(timeout_secs))
+            } else {
+                fetch
+            };
+            fetch.await.map_err(|e| NostrError::Invalid(e.to_string()))
+        })?;
+        Ok(events.into_iter().map(|e| e.as_json()).collect())
     }
 }
 

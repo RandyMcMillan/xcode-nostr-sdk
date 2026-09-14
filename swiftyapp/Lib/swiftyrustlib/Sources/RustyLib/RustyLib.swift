@@ -491,6 +491,8 @@ public protocol NostrClientProtocol : AnyObject {
     
     func disconnect() 
     
+    func fetchEvents(filterJson: String, timeoutSecs: UInt64) throws  -> [String]
+    
     func getRelays()  -> [String]
     
     func publishEvent(eventJson: String) throws  -> String
@@ -565,6 +567,15 @@ open func disconnect() {try! rustCall() {
 }
 }
     
+open func fetchEvents(filterJson: String, timeoutSecs: UInt64)throws  -> [String] {
+    return try  FfiConverterSequenceString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_method_nostrclient_fetch_events(self.uniffiClonePointer(),
+        FfiConverterString.lower(filterJson),
+        FfiConverterUInt64.lower(timeoutSecs),$0
+    )
+})
+}
+    
 open func getRelays() -> [String] {
     return try!  FfiConverterSequenceString.lift(try! rustCall() {
     uniffi_rustylib_fn_method_nostrclient_get_relays(self.uniffiClonePointer(),$0
@@ -623,6 +634,63 @@ public func FfiConverterTypeNostrClient_lift(_ pointer: UnsafeMutableRawPointer)
 
 public func FfiConverterTypeNostrClient_lower(_ value: NostrClient) -> UnsafeMutableRawPointer {
     return FfiConverterTypeNostrClient.lower(value)
+}
+
+
+public struct Nip05ProfileResult {
+    public var pubkeyHex: String
+    public var relays: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(pubkeyHex: String, relays: [String]) {
+        self.pubkeyHex = pubkeyHex
+        self.relays = relays
+    }
+}
+
+
+
+extension Nip05ProfileResult: Equatable, Hashable {
+    public static func ==(lhs: Nip05ProfileResult, rhs: Nip05ProfileResult) -> Bool {
+        if lhs.pubkeyHex != rhs.pubkeyHex {
+            return false
+        }
+        if lhs.relays != rhs.relays {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(pubkeyHex)
+        hasher.combine(relays)
+    }
+}
+
+
+public struct FfiConverterTypeNip05ProfileResult: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Nip05ProfileResult {
+        return
+            try Nip05ProfileResult(
+                pubkeyHex: FfiConverterString.read(from: &buf), 
+                relays: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Nip05ProfileResult, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.pubkeyHex, into: &buf)
+        FfiConverterSequenceString.write(value.relays, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeNip05ProfileResult_lift(_ buf: RustBuffer) throws -> Nip05ProfileResult {
+    return try FfiConverterTypeNip05ProfileResult.lift(buf)
+}
+
+public func FfiConverterTypeNip05ProfileResult_lower(_ value: Nip05ProfileResult) -> RustBuffer {
+    return FfiConverterTypeNip05ProfileResult.lower(value)
 }
 
 
@@ -935,6 +1003,16 @@ public func createDeletionRequest(secretKey: String, eventIdsHex: [String], reas
     )
 })
 }
+public func createGiftWrap(secretKey: String, recipientPubkeyHex: String, rumorKind: UInt16, rumorContent: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_gift_wrap(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(recipientPubkeyHex),
+        FfiConverterUInt16.lower(rumorKind),
+        FfiConverterString.lower(rumorContent),$0
+    )
+})
+}
 public func createMetadataEvent(secretKey: String, name: String, about: String, picture: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_metadata_event(
@@ -1107,6 +1185,14 @@ public func nip44Encrypt(secretKey: String, recipientPubkey: String, content: St
     )
 })
 }
+public func parseNip05Profile(address: String, jsonRaw: String)throws  -> Nip05ProfileResult {
+    return try  FfiConverterTypeNip05ProfileResult.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_parse_nip05_profile(
+        FfiConverterString.lower(address),
+        FfiConverterString.lower(jsonRaw),$0
+    )
+})
+}
 public func rustAdd(a: UInt32, b: UInt32) -> UInt32 {
     return try!  FfiConverterUInt32.lift(try! rustCall() {
     uniffi_rustylib_fn_func_rust_add(
@@ -1125,6 +1211,15 @@ public func verifyEvent(eventJson: String)throws  -> Bool {
     return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_verify_event(
         FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func verifyNip05(pubkeyHex: String, address: String, jsonRaw: String)throws  -> Bool {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_verify_nip05(
+        FfiConverterString.lower(pubkeyHex),
+        FfiConverterString.lower(address),
+        FfiConverterString.lower(jsonRaw),$0
     )
 })
 }
@@ -1154,6 +1249,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_deletion_request() != 34955) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_gift_wrap() != 4488) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_metadata_event() != 38004) {
@@ -1219,6 +1317,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_nip44_encrypt() != 34254) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_parse_nip05_profile() != 46208) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_rust_add() != 47653) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1228,6 +1329,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_verify_event() != 5569) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_verify_nip05() != 12489) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_method_nostrclient_add_relay() != 65028) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1235,6 +1339,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_method_nostrclient_disconnect() != 59198) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_method_nostrclient_fetch_events() != 53674) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_method_nostrclient_get_relays() != 12228) {

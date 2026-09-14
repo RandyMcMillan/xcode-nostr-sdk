@@ -92,12 +92,27 @@ struct ContentView: View {
     @State private var metadataKind: UInt16 = 0
     @State private var metadataPubkey = ""
 
+    // NIP-05
+    @State private var nip05Address = ""
+    @State private var nip05Pubkey = ""
+    @State private var nip05Json = ""
+    @State private var nip05VerifyResult: Bool? = nil
+    @State private var nip05Profile: Nip05ProfileResult? = nil
+
+    // Gift Wrap (NIP-59)
+    @State private var gwRecipient = ""
+    @State private var gwKind: UInt16 = 1
+    @State private var gwContent = "Secret message"
+    @State private var gwJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
     @State private var clientStatus = ""
     @State private var nostrClient: NostrClient? = nil
     @State private var clientRelays: [String] = []
+    @State private var clientFilterJson = ""
+    @State private var clientFetchedEvents: [String] = []
 
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
@@ -717,6 +732,71 @@ struct ContentView: View {
 
                     glassCard {
                         VStack(alignment: .leading, spacing: 16) {
+                            Label("NIP-05 Verification", systemImage: "checkmark.seal.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Verify")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("NIP-05 address", text: $nip05Address)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Pubkey (hex)", text: $nip05Pubkey)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextEditor(text: $nip05Json)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                Button {
+                                    if let result = try? verifyNip05(pubkeyHex: nip05Pubkey, address: nip05Address, jsonRaw: nip05Json) {
+                                        nip05VerifyResult = result
+                                    } else {
+                                        nip05VerifyResult = nil
+                                    }
+                                } label: {
+                                    Label("Verify NIP-05", systemImage: "checkmark.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if let result = nip05VerifyResult {
+                                    Text(result ? "Verified ✓" : "Not verified ✗")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(result ? .green : .red)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Parse Profile")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                Button {
+                                    nip05Profile = try? parseNip05Profile(address: nip05Address, jsonRaw: nip05Json)
+                                } label: {
+                                    Label("Parse Profile", systemImage: "person.crop.circle.badge.checkmark")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if let profile = nip05Profile {
+                                    keyRow(label: "Pubkey", value: profile.pubkeyHex)
+                                    if !profile.relays.isEmpty {
+                                        keyRow(label: "Relays", value: profile.relays.joined(separator: ", "))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
                             Label("More Events", systemImage: "bolt.fill")
                                 .font(.headline)
                                 .foregroundStyle(accentText)
@@ -870,6 +950,37 @@ struct ContentView: View {
                             .disabled(nsecKey.isEmpty)
                             if !zapJson.isEmpty {
                                 jsonBlock(zapJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Gift Wrap (NIP-59)", systemImage: "gift.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Recipient pubkey (hex)", text: $gwRecipient)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Rumor kind", value: $gwKind, format: .number)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Rumor content", text: $gwContent)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                gwJson = (try? createGiftWrap(
+                                    secretKey: nsecKey,
+                                    recipientPubkeyHex: gwRecipient,
+                                    rumorKind: gwKind,
+                                    rumorContent: gwContent
+                                )) ?? ""
+                            } label: {
+                                Label("Create Gift Wrap", systemImage: "gift.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !gwJson.isEmpty {
+                                jsonBlock(gwJson)
                             }
                         }
                     }
@@ -1061,6 +1172,30 @@ struct ContentView: View {
                                 }
                                 .buttonStyle(PrimaryButtonStyle())
                                 .disabled(nostrClient == nil)
+
+                                TextEditor(text: $clientFilterJson)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                Button {
+                                    clientFetchedEvents = (try? nostrClient?.fetchEvents(filterJson: clientFilterJson, timeoutSecs: 10)) ?? []
+                                    clientStatus = "Fetched \(clientFetchedEvents.count) events"
+                                } label: {
+                                    Label("Fetch Events", systemImage: "arrow.down.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nostrClient == nil || clientFilterJson.isEmpty)
+                                if !clientFetchedEvents.isEmpty {
+                                    ForEach(clientFetchedEvents.indices, id: \.self) { i in
+                                        jsonBlock(clientFetchedEvents[i])
+                                    }
+                                }
 
                                 if !clientStatus.isEmpty {
                                     Text(clientStatus)
