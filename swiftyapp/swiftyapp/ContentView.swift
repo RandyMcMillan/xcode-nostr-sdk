@@ -236,6 +236,21 @@ struct ContentView: View {
     @State private var extHint = ""
     @State private var extJson = ""
 
+    // Polls (NIP-88)
+    @State private var pollTitle = "What's your favorite language?"
+    @State private var pollType = "singlechoice"
+    @State private var pollOptions = "Rust, Swift, Python"
+    @State private var pollEndsAt: UInt64 = 0
+    @State private var pollJson = ""
+    @State private var pollResponseId = ""
+    @State private var pollResponseValue = ""
+    @State private var pollResponseJson = ""
+
+    // Vanish Request (NIP-62)
+    @State private var vanishReason = ""
+    @State private var vanishRelays = ""
+    @State private var vanishJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -2125,6 +2140,104 @@ struct ContentView: View {
                                 if !extJson.isEmpty {
                                     jsonBlock(extJson)
                                 }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Polls (NIP-88)", systemImage: "chart.bar.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Create Poll")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Title", text: $pollTitle)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Type (singlechoice/multiplechoice)", text: $pollType)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Options (comma-separated)", text: $pollOptions)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Ends At (unix secs, 0 for none)", value: $pollEndsAt, format: .number)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let opts = pollOptions.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    pollJson = (try? createPoll(
+                                        secretKey: nsecKey,
+                                        title: pollTitle,
+                                        pollType: pollType,
+                                        options: opts,
+                                        endsAtSecs: pollEndsAt
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Poll", systemImage: "chart.bar.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !pollJson.isEmpty {
+                                    jsonBlock(pollJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Poll Response")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Poll Event ID (hex)", text: $pollResponseId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Response (option ID)", text: $pollResponseValue)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    pollResponseJson = (try? createPollResponse(
+                                        secretKey: nsecKey,
+                                        pollEventIdHex: pollResponseId,
+                                        response: pollResponseValue,
+                                        isMultipleChoice: pollType == "multiplechoice"
+                                    )) ?? ""
+                                } label: {
+                                    Label("Submit Response", systemImage: "checkmark.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !pollResponseJson.isEmpty {
+                                    jsonBlock(pollResponseJson)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Vanish Request (NIP-62)", systemImage: "flame.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Reason", text: $vanishReason)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Relays (comma-separated, empty for all)", text: $vanishRelays)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let relays = vanishRelays.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                vanishJson = (try? createVanishRequest(
+                                    secretKey: nsecKey,
+                                    reason: vanishReason,
+                                    relayUrls: relays
+                                )) ?? ""
+                            } label: {
+                                Label("Request Vanish", systemImage: "flame.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !vanishJson.isEmpty {
+                                jsonBlock(vanishJson)
                             }
                         }
                     }

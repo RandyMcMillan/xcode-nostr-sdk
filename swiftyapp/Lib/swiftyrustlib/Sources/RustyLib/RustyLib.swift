@@ -1405,6 +1405,27 @@ public func createPinnedNotes(secretKey: String, eventIdsHex: [String])throws  -
     )
 })
 }
+public func createPoll(secretKey: String, title: String, pollType: String, options: [String], endsAtSecs: UInt64)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_poll(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(title),
+        FfiConverterString.lower(pollType),
+        FfiConverterSequenceString.lower(options),
+        FfiConverterUInt64.lower(endsAtSecs),$0
+    )
+})
+}
+public func createPollResponse(secretKey: String, pollEventIdHex: String, response: String, isMultipleChoice: Bool)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_poll_response(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(pollEventIdHex),
+        FfiConverterString.lower(response),
+        FfiConverterBool.lower(isMultipleChoice),$0
+    )
+})
+}
 public func createPrivateMessage(secretKey: String, recipientPubkeyHex: String, message: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_private_message(
@@ -1495,6 +1516,15 @@ public func createThreadReply(secretKey: String, content: String, rootEventIdHex
         FfiConverterString.lower(rootEventIdHex),
         FfiConverterString.lower(replyToEventIdHex),
         FfiConverterString.lower(replyToAuthorPubkeyHex),$0
+    )
+})
+}
+public func createVanishRequest(secretKey: String, reason: String, relayUrls: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_vanish_request(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(reason),
+        FfiConverterSequenceString.lower(relayUrls),$0
     )
 })
 }
@@ -1822,6 +1852,12 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_pinned_notes() != 41999) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_poll() != 54651) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_poll_response() != 6570) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_private_message() != 43144) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1850,6 +1886,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_thread_reply() != 51468) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_vanish_request() != 60123) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_zap_request() != 46769) {

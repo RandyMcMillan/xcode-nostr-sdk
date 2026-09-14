@@ -989,6 +989,86 @@ pub fn create_external_content_event(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn create_poll(
+    secret_key: String,
+    title: String,
+    poll_type: String,
+    options: Vec<String>,
+    ends_at_secs: u64,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let ptype = match poll_type.as_str() {
+        "multiplechoice" => PollType::MultipleChoice,
+        _ => PollType::SingleChoice,
+    };
+    let poll_options: Vec<PollOption> = options
+        .into_iter()
+        .enumerate()
+        .map(|(i, text)| PollOption {
+            id: (i + 1).to_string(),
+            text,
+        })
+        .collect();
+    let mut poll = Poll {
+        title,
+        r#type: ptype,
+        options: poll_options,
+        relays: Vec::new(),
+        ends_at: None,
+    };
+    if ends_at_secs > 0 {
+        poll.ends_at = Some(Timestamp::from_secs(ends_at_secs));
+    }
+    let event = poll.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_poll_response(
+    secret_key: String,
+    poll_event_id_hex: String,
+    response: String,
+    is_multiple_choice: bool,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let poll_id = EventId::from_hex(&poll_event_id_hex)?;
+    let poll_response = if is_multiple_choice {
+        PollResponse::MultipleChoice {
+            poll_id,
+            responses: response.split(',').map(|s| s.trim().to_string()).collect(),
+        }
+    } else {
+        PollResponse::SingleChoice {
+            poll_id,
+            response,
+        }
+    };
+    let event = poll_response.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_vanish_request(
+    secret_key: String,
+    reason: String,
+    relay_urls: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let target = if relay_urls.is_empty() {
+        VanishTarget::all_relays()
+    } else {
+        let relays: Vec<RelayUrl> = relay_urls
+            .into_iter()
+            .map(|url| RelayUrl::parse(&url))
+            .collect::<Result<Vec<_>, _>>()?;
+        VanishTarget::relays(relays)
+    };
+    let request = VanishRequest::new(target).reason(reason);
+    let event = request.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;
