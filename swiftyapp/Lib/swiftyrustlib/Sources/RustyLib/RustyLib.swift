@@ -1295,6 +1295,16 @@ public func createDeletionRequest(secretKey: String, eventIdsHex: [String], reas
     )
 })
 }
+public func createExternalContentEvent(secretKey: String, content: String, externalId: String, hintUrl: String?)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_external_content_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(content),
+        FfiConverterString.lower(externalId),
+        FfiConverterOptionString.lower(hintUrl),$0
+    )
+})
+}
 public func createFileMetadata(secretKey: String, description: String, url: String, mimeType: String, hashHex: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_file_metadata(
@@ -1401,6 +1411,16 @@ public func createPrivateMessage(secretKey: String, recipientPubkeyHex: String, 
         FfiConverterString.lower(secretKey),
         FfiConverterString.lower(recipientPubkeyHex),
         FfiConverterString.lower(message),$0
+    )
+})
+}
+public func createProxyEvent(secretKey: String, content: String, proxyId: String, `protocol`: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_proxy_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(content),
+        FfiConverterString.lower(proxyId),
+        FfiConverterString.lower(`protocol`),$0
     )
 })
 }
@@ -1544,6 +1564,13 @@ public func eventSignatureValid(eventJson: String)throws  -> Bool {
 public func eventTagsJson(eventJson: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_event_tags_json(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func eventVerifyId(eventJson: String)throws  -> Bool {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_verify_id(
         FfiConverterString.lower(eventJson),$0
     )
 })
@@ -1762,6 +1789,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_deletion_request() != 34955) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_external_content_event() != 39804) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_file_metadata() != 32438) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1793,6 +1823,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_private_message() != 43144) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_proxy_event() != 16910) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_quote_repost() != 16440) {
@@ -1844,6 +1877,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_event_tags_json() != 48031) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_verify_id() != 47920) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_filter_matches_event() != 62926) {

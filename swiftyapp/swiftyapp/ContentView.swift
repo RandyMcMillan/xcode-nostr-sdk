@@ -226,6 +226,16 @@ struct ContentView: View {
     @State private var liveMsgContent = "Hello viewers!"
     @State private var liveMsgJson = ""
 
+    // Proxy & External Content
+    @State private var proxyContent = "Proxy post"
+    @State private var proxyId = ""
+    @State private var proxyProtocol = "activitypub"
+    @State private var proxyJson = ""
+    @State private var extContent = "Check this out"
+    @State private var extId = "https://example.com"
+    @State private var extHint = ""
+    @State private var extJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -2046,6 +2056,74 @@ struct ContentView: View {
                                 .disabled(nsecKey.isEmpty)
                                 if !liveMsgJson.isEmpty {
                                     jsonBlock(liveMsgJson)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Proxy & External Content", systemImage: "globe")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Proxy Event (NIP-48)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Content", text: $proxyContent)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Proxy ID", text: $proxyId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Protocol (activitypub/atproto/rss/web)", text: $proxyProtocol)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    proxyJson = (try? createProxyEvent(
+                                        secretKey: nsecKey,
+                                        content: proxyContent,
+                                        proxyId: proxyId,
+                                        protocol: proxyProtocol
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Proxy Event", systemImage: "globe")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !proxyJson.isEmpty {
+                                    jsonBlock(proxyJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("External Content (NIP-73)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Content", text: $extContent)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("External ID (URL, ISBN, etc.)", text: $extId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Hint URL (optional)", text: $extHint)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let hintOpt: String? = extHint.isEmpty ? nil : extHint
+                                    extJson = (try? createExternalContentEvent(
+                                        secretKey: nsecKey,
+                                        content: extContent,
+                                        externalId: extId,
+                                        hintUrl: hintOpt
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create External Content", systemImage: "link")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !extJson.isEmpty {
+                                    jsonBlock(extJson)
                                 }
                             }
                         }

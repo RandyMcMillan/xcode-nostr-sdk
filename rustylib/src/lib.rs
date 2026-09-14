@@ -949,6 +949,46 @@ pub fn create_live_event_message(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn event_verify_id(event_json: String) -> Result<bool, NostrError> {
+    let event = Event::from_json(event_json)?;
+    Ok(event.verify_id())
+}
+
+#[uniffi::export]
+pub fn create_proxy_event(
+    secret_key: String,
+    content: String,
+    proxy_id: String,
+    protocol: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event = EventBuilder::new(Kind::TextNote, content)
+        .tags([Tag::parse(["proxy", &proxy_id, &protocol])?])
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_external_content_event(
+    secret_key: String,
+    content: String,
+    external_id: String,
+    hint_url: Option<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let ext: ExternalContentId = external_id.parse().map_err(|_| NostrError::Invalid("invalid external content id".to_string()))?;
+    let mut tag_vals = vec![String::from("i"), ext.to_string()];
+    if let Some(hint) = hint_url {
+        let url = Url::parse(&hint).map_err(|e| NostrError::Invalid(e.to_string()))?;
+        tag_vals.push(url.to_string());
+    }
+    let event = EventBuilder::new(Kind::TextNote, content)
+        .tags([Tag::parse(tag_vals)?])
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;
