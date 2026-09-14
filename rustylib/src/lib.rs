@@ -688,6 +688,75 @@ pub fn nip19_encode_coordinate(
     Ok(naddr.to_bech32()?)
 }
 
+#[derive(uniffi::Record)]
+pub struct Nip19EventResult {
+    pub event_id_hex: String,
+    pub author_hex: String,
+    pub kind: u16,
+    pub relays: Vec<String>,
+}
+
+#[derive(uniffi::Record)]
+pub struct Nip19ProfileResult {
+    pub pubkey_hex: String,
+    pub relays: Vec<String>,
+}
+
+#[derive(uniffi::Record)]
+pub struct Nip19CoordinateResult {
+    pub kind: u16,
+    pub pubkey_hex: String,
+    pub identifier: String,
+    pub relays: Vec<String>,
+}
+
+#[uniffi::export]
+pub fn nip19_decode_event(bech32: String) -> Result<Nip19EventResult, NostrError> {
+    let ev = Nip19Event::from_bech32(&bech32)?;
+    Ok(Nip19EventResult {
+        event_id_hex: ev.event_id.to_hex(),
+        author_hex: ev.author.map(|a| a.to_hex()).unwrap_or_default(),
+        kind: ev.kind.map(|k| k.as_u16()).unwrap_or(0),
+        relays: ev.relays.into_iter().map(|r| r.to_string()).collect(),
+    })
+}
+
+#[uniffi::export]
+pub fn nip19_decode_profile(bech32: String) -> Result<Nip19ProfileResult, NostrError> {
+    let profile = Nip19Profile::from_bech32(&bech32)?;
+    Ok(Nip19ProfileResult {
+        pubkey_hex: profile.public_key.to_hex(),
+        relays: profile.relays.into_iter().map(|r| r.to_string()).collect(),
+    })
+}
+
+#[uniffi::export]
+pub fn nip19_decode_coordinate(bech32: String) -> Result<Nip19CoordinateResult, NostrError> {
+    let coord = Nip19Coordinate::from_bech32(&bech32)?;
+    Ok(Nip19CoordinateResult {
+        kind: coord.kind.as_u16(),
+        pubkey_hex: coord.public_key.to_hex(),
+        identifier: coord.identifier.clone(),
+        relays: coord.relays.into_iter().map(|r| r.to_string()).collect(),
+    })
+}
+
+#[uniffi::export]
+pub fn create_file_metadata(
+    secret_key: String,
+    description: String,
+    url: String,
+    mime_type: String,
+    hash_hex: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let url = Url::parse(&url).map_err(|e| NostrError::Invalid(e.to_string()))?;
+    let hash = Sha256Hash::from_hex(&hash_hex)?;
+    let metadata = FileMetadata::new(url, mime_type, hash);
+    let event = FileMetadataEventBuilder::new(description, metadata).finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;

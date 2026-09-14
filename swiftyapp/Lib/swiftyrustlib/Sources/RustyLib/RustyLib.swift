@@ -694,6 +694,209 @@ public func FfiConverterTypeNip05ProfileResult_lower(_ value: Nip05ProfileResult
 }
 
 
+public struct Nip19CoordinateResult {
+    public var kind: UInt16
+    public var pubkeyHex: String
+    public var identifier: String
+    public var relays: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(kind: UInt16, pubkeyHex: String, identifier: String, relays: [String]) {
+        self.kind = kind
+        self.pubkeyHex = pubkeyHex
+        self.identifier = identifier
+        self.relays = relays
+    }
+}
+
+
+
+extension Nip19CoordinateResult: Equatable, Hashable {
+    public static func ==(lhs: Nip19CoordinateResult, rhs: Nip19CoordinateResult) -> Bool {
+        if lhs.kind != rhs.kind {
+            return false
+        }
+        if lhs.pubkeyHex != rhs.pubkeyHex {
+            return false
+        }
+        if lhs.identifier != rhs.identifier {
+            return false
+        }
+        if lhs.relays != rhs.relays {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(kind)
+        hasher.combine(pubkeyHex)
+        hasher.combine(identifier)
+        hasher.combine(relays)
+    }
+}
+
+
+public struct FfiConverterTypeNip19CoordinateResult: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Nip19CoordinateResult {
+        return
+            try Nip19CoordinateResult(
+                kind: FfiConverterUInt16.read(from: &buf), 
+                pubkeyHex: FfiConverterString.read(from: &buf), 
+                identifier: FfiConverterString.read(from: &buf), 
+                relays: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Nip19CoordinateResult, into buf: inout [UInt8]) {
+        FfiConverterUInt16.write(value.kind, into: &buf)
+        FfiConverterString.write(value.pubkeyHex, into: &buf)
+        FfiConverterString.write(value.identifier, into: &buf)
+        FfiConverterSequenceString.write(value.relays, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeNip19CoordinateResult_lift(_ buf: RustBuffer) throws -> Nip19CoordinateResult {
+    return try FfiConverterTypeNip19CoordinateResult.lift(buf)
+}
+
+public func FfiConverterTypeNip19CoordinateResult_lower(_ value: Nip19CoordinateResult) -> RustBuffer {
+    return FfiConverterTypeNip19CoordinateResult.lower(value)
+}
+
+
+public struct Nip19EventResult {
+    public var eventIdHex: String
+    public var authorHex: String
+    public var kind: UInt16
+    public var relays: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(eventIdHex: String, authorHex: String, kind: UInt16, relays: [String]) {
+        self.eventIdHex = eventIdHex
+        self.authorHex = authorHex
+        self.kind = kind
+        self.relays = relays
+    }
+}
+
+
+
+extension Nip19EventResult: Equatable, Hashable {
+    public static func ==(lhs: Nip19EventResult, rhs: Nip19EventResult) -> Bool {
+        if lhs.eventIdHex != rhs.eventIdHex {
+            return false
+        }
+        if lhs.authorHex != rhs.authorHex {
+            return false
+        }
+        if lhs.kind != rhs.kind {
+            return false
+        }
+        if lhs.relays != rhs.relays {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(eventIdHex)
+        hasher.combine(authorHex)
+        hasher.combine(kind)
+        hasher.combine(relays)
+    }
+}
+
+
+public struct FfiConverterTypeNip19EventResult: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Nip19EventResult {
+        return
+            try Nip19EventResult(
+                eventIdHex: FfiConverterString.read(from: &buf), 
+                authorHex: FfiConverterString.read(from: &buf), 
+                kind: FfiConverterUInt16.read(from: &buf), 
+                relays: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Nip19EventResult, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.eventIdHex, into: &buf)
+        FfiConverterString.write(value.authorHex, into: &buf)
+        FfiConverterUInt16.write(value.kind, into: &buf)
+        FfiConverterSequenceString.write(value.relays, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeNip19EventResult_lift(_ buf: RustBuffer) throws -> Nip19EventResult {
+    return try FfiConverterTypeNip19EventResult.lift(buf)
+}
+
+public func FfiConverterTypeNip19EventResult_lower(_ value: Nip19EventResult) -> RustBuffer {
+    return FfiConverterTypeNip19EventResult.lower(value)
+}
+
+
+public struct Nip19ProfileResult {
+    public var pubkeyHex: String
+    public var relays: [String]
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(pubkeyHex: String, relays: [String]) {
+        self.pubkeyHex = pubkeyHex
+        self.relays = relays
+    }
+}
+
+
+
+extension Nip19ProfileResult: Equatable, Hashable {
+    public static func ==(lhs: Nip19ProfileResult, rhs: Nip19ProfileResult) -> Bool {
+        if lhs.pubkeyHex != rhs.pubkeyHex {
+            return false
+        }
+        if lhs.relays != rhs.relays {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(pubkeyHex)
+        hasher.combine(relays)
+    }
+}
+
+
+public struct FfiConverterTypeNip19ProfileResult: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Nip19ProfileResult {
+        return
+            try Nip19ProfileResult(
+                pubkeyHex: FfiConverterString.read(from: &buf), 
+                relays: FfiConverterSequenceString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Nip19ProfileResult, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.pubkeyHex, into: &buf)
+        FfiConverterSequenceString.write(value.relays, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeNip19ProfileResult_lift(_ buf: RustBuffer) throws -> Nip19ProfileResult {
+    return try FfiConverterTypeNip19ProfileResult.lift(buf)
+}
+
+public func FfiConverterTypeNip19ProfileResult_lower(_ value: Nip19ProfileResult) -> RustBuffer {
+    return FfiConverterTypeNip19ProfileResult.lower(value)
+}
+
+
 public struct Nip19Result {
     public var prefix: String
     public var data: String
@@ -1052,6 +1255,17 @@ public func createDeletionRequest(secretKey: String, eventIdsHex: [String], reas
     )
 })
 }
+public func createFileMetadata(secretKey: String, description: String, url: String, mimeType: String, hashHex: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_file_metadata(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(description),
+        FfiConverterString.lower(url),
+        FfiConverterString.lower(mimeType),
+        FfiConverterString.lower(hashHex),$0
+    )
+})
+}
 public func createGiftWrap(secretKey: String, recipientPubkeyHex: String, rumorKind: UInt16, rumorContent: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_gift_wrap(
@@ -1258,6 +1472,27 @@ public func nip19Decode(bech32: String)throws  -> Nip19Result {
     )
 })
 }
+public func nip19DecodeCoordinate(bech32: String)throws  -> Nip19CoordinateResult {
+    return try  FfiConverterTypeNip19CoordinateResult.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_decode_coordinate(
+        FfiConverterString.lower(bech32),$0
+    )
+})
+}
+public func nip19DecodeEvent(bech32: String)throws  -> Nip19EventResult {
+    return try  FfiConverterTypeNip19EventResult.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_decode_event(
+        FfiConverterString.lower(bech32),$0
+    )
+})
+}
+public func nip19DecodeProfile(bech32: String)throws  -> Nip19ProfileResult {
+    return try  FfiConverterTypeNip19ProfileResult.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_decode_profile(
+        FfiConverterString.lower(bech32),$0
+    )
+})
+}
 public func nip19Encode(dataHex: String, prefix: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_nip19_encode(
@@ -1402,6 +1637,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_deletion_request() != 34955) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_file_metadata() != 32438) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_gift_wrap() != 4488) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1472,6 +1710,15 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_nip19_decode() != 2298) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_decode_coordinate() != 8972) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_decode_event() != 6332) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_decode_profile() != 45047) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_nip19_encode() != 14456) {

@@ -167,6 +167,19 @@ struct ContentView: View {
     @State private var naddrRelays = ""
     @State private var naddrResult = ""
 
+    // NIP-19 Advanced Decode
+    @State private var decodeBech32 = ""
+    @State private var decodedNevent: Nip19EventResult? = nil
+    @State private var decodedNprofile: Nip19ProfileResult? = nil
+    @State private var decodedNaddr: Nip19CoordinateResult? = nil
+
+    // NIP-94 File Metadata
+    @State private var fileDescription = "My file"
+    @State private var fileUrl = "https://example.com/file.png"
+    @State private var fileMime = "image/png"
+    @State private var fileHash = ""
+    @State private var fileJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -1575,6 +1588,95 @@ struct ContentView: View {
                                 if !naddrResult.isEmpty {
                                     keyRow(label: "naddr", value: naddrResult)
                                 }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("NIP-19 Advanced Decode", systemImage: "barcode.viewfinder")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("bech32 string", text: $decodeBech32)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                decodedNevent = try? nip19DecodeEvent(bech32: decodeBech32)
+                                decodedNprofile = try? nip19DecodeProfile(bech32: decodeBech32)
+                                decodedNaddr = try? nip19DecodeCoordinate(bech32: decodeBech32)
+                            } label: {
+                                Label("Decode", systemImage: "barcode.viewfinder")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            if let ev = decodedNevent, !ev.eventIdHex.isEmpty {
+                                Text("nevent")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(accentText)
+                                keyRow(label: "Event ID", value: ev.eventIdHex)
+                                if !ev.authorHex.isEmpty {
+                                    keyRow(label: "Author", value: ev.authorHex)
+                                }
+                                if ev.kind > 0 {
+                                    keyRow(label: "Kind", value: "\(ev.kind)")
+                                }
+                                if !ev.relays.isEmpty {
+                                    keyRow(label: "Relays", value: ev.relays.joined(separator: ", "))
+                                }
+                            }
+                            if let profile = decodedNprofile, !profile.pubkeyHex.isEmpty {
+                                Text("nprofile")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(accentText)
+                                keyRow(label: "Pubkey", value: profile.pubkeyHex)
+                                if !profile.relays.isEmpty {
+                                    keyRow(label: "Relays", value: profile.relays.joined(separator: ", "))
+                                }
+                            }
+                            if let coord = decodedNaddr, coord.kind > 0 {
+                                Text("naddr")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(accentText)
+                                keyRow(label: "Kind", value: "\(coord.kind)")
+                                keyRow(label: "Pubkey", value: coord.pubkeyHex)
+                                keyRow(label: "Identifier", value: coord.identifier)
+                                if !coord.relays.isEmpty {
+                                    keyRow(label: "Relays", value: coord.relays.joined(separator: ", "))
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("File Metadata (NIP-94)", systemImage: "doc.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Description", text: $fileDescription)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("URL", text: $fileUrl)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("MIME type", text: $fileMime)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("SHA256 hash (hex)", text: $fileHash)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                fileJson = (try? createFileMetadata(
+                                    secretKey: nsecKey,
+                                    description: fileDescription,
+                                    url: fileUrl,
+                                    mimeType: fileMime,
+                                    hashHex: fileHash
+                                )) ?? ""
+                            } label: {
+                                Label("Create File Metadata", systemImage: "doc.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !fileJson.isEmpty {
+                                jsonBlock(fileJson)
                             }
                         }
                     }
