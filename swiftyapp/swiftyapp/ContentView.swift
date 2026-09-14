@@ -105,6 +105,25 @@ struct ContentView: View {
     @State private var gwContent = "Secret message"
     @State private var gwJson = ""
 
+    // Private Message (NIP-17)
+    @State private var pmRecipient = ""
+    @State private var pmMessage = "Hello privately!"
+    @State private var pmJson = ""
+
+    // HTTP Auth (NIP-98)
+    @State private var authUrl = "https://example.com/api"
+    @State private var authMethod = "GET"
+    @State private var authPayload = ""
+    @State private var httpAuthJson = ""
+
+    // Long-form (NIP-23)
+    @State private var lfTitle = "My Article"
+    @State private var lfContent = "This is a long-form article..."
+    @State private var lfSummary = "A summary"
+    @State private var lfImage = ""
+    @State private var lfPublishedAt: UInt64 = 0
+    @State private var lfJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -981,6 +1000,110 @@ struct ContentView: View {
                             .disabled(nsecKey.isEmpty)
                             if !gwJson.isEmpty {
                                 jsonBlock(gwJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Private Message (NIP-17)", systemImage: "envelope.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Recipient pubkey (hex)", text: $pmRecipient)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Message", text: $pmMessage)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                pmJson = (try? createPrivateMessage(
+                                    secretKey: nsecKey,
+                                    recipientPubkeyHex: pmRecipient,
+                                    message: pmMessage
+                                )) ?? ""
+                            } label: {
+                                Label("Create Private Message", systemImage: "envelope.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !pmJson.isEmpty {
+                                jsonBlock(pmJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("HTTP Auth (NIP-98)", systemImage: "lock.shield.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("URL", text: $authUrl)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Method (GET/POST/PUT/PATCH)", text: $authMethod)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Payload hash (optional)", text: $authPayload)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let payloadOpt: String? = authPayload.isEmpty ? nil : authPayload
+                                httpAuthJson = (try? createHttpAuth(
+                                    secretKey: nsecKey,
+                                    url: authUrl,
+                                    method: authMethod,
+                                    payloadHash: payloadOpt
+                                )) ?? ""
+                            } label: {
+                                Label("Create HTTP Auth", systemImage: "lock.shield.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !httpAuthJson.isEmpty {
+                                jsonBlock(httpAuthJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Long-form Content (NIP-23)", systemImage: "doc.text.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Title", text: $lfTitle)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextEditor(text: $lfContent)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            TextField("Summary", text: $lfSummary)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Image URL", text: $lfImage)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Published At (unix secs)", value: $lfPublishedAt, format: .number)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                lfJson = (try? createLongForm(
+                                    secretKey: nsecKey,
+                                    title: lfTitle,
+                                    content: lfContent,
+                                    summary: lfSummary,
+                                    image: lfImage,
+                                    publishedAt: lfPublishedAt
+                                )) ?? ""
+                            } label: {
+                                Label("Create Article", systemImage: "doc.text.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !lfJson.isEmpty {
+                                jsonBlock(lfJson)
                             }
                         }
                     }

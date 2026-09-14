@@ -1013,6 +1013,28 @@ public func createGiftWrap(secretKey: String, recipientPubkeyHex: String, rumorK
     )
 })
 }
+public func createHttpAuth(secretKey: String, url: String, method: String, payloadHash: String?)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_http_auth(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(url),
+        FfiConverterString.lower(method),
+        FfiConverterOptionString.lower(payloadHash),$0
+    )
+})
+}
+public func createLongForm(secretKey: String, title: String, content: String, summary: String, image: String, publishedAt: UInt64)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_long_form(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(title),
+        FfiConverterString.lower(content),
+        FfiConverterString.lower(summary),
+        FfiConverterString.lower(image),
+        FfiConverterUInt64.lower(publishedAt),$0
+    )
+})
+}
 public func createMetadataEvent(secretKey: String, name: String, about: String, picture: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_metadata_event(
@@ -1020,6 +1042,15 @@ public func createMetadataEvent(secretKey: String, name: String, about: String, 
         FfiConverterString.lower(name),
         FfiConverterString.lower(about),
         FfiConverterString.lower(picture),$0
+    )
+})
+}
+public func createPrivateMessage(secretKey: String, recipientPubkeyHex: String, message: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_private_message(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(recipientPubkeyHex),
+        FfiConverterString.lower(message),$0
     )
 })
 }
@@ -1254,7 +1285,16 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_gift_wrap() != 4488) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_http_auth() != 29164) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_long_form() != 61371) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_metadata_event() != 38004) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_private_message() != 43144) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_reaction() != 11284) {

@@ -450,6 +450,66 @@ pub fn create_gift_wrap(
     Ok(gift_wrap.as_json())
 }
 
+#[uniffi::export]
+pub fn create_private_message(
+    secret_key: String,
+    recipient_pubkey_hex: String,
+    message: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let recipient = PublicKey::from_hex(&recipient_pubkey_hex)?;
+    let event = PrivateDirectMessageBuilder::new(recipient, message).finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_http_auth(
+    secret_key: String,
+    url: String,
+    method: String,
+    payload_hash: Option<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let url = Url::parse(&url).map_err(|e| NostrError::Invalid(e.to_string()))?;
+    let method = match method.as_str() {
+        "GET" => HttpMethod::GET,
+        "POST" => HttpMethod::POST,
+        "PUT" => HttpMethod::PUT,
+        "PATCH" => HttpMethod::PATCH,
+        _ => return Err(NostrError::Invalid("Unsupported HTTP method".to_string())),
+    };
+    let payload = payload_hash.map(|h| Sha256Hash::from_hex(&h)).transpose()?;
+    let data = HttpData { url, method, payload };
+    let event = data.into_event_builder().finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_long_form(
+    secret_key: String,
+    title: String,
+    content: String,
+    summary: String,
+    image: String,
+    published_at: u64,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let mut tags: Vec<Tag> = vec![Tag::parse(["title", &title])?];
+    if !summary.is_empty() {
+        tags.push(Tag::parse(["summary", &summary])?);
+    }
+    if let Ok(img_url) = Url::parse(&image) {
+        tags.push(Tag::parse(["image", img_url.as_str()])?);
+    }
+    if published_at > 0 {
+        tags.push(Tag::parse(["published_at", &published_at.to_string()])?);
+    }
+    let event = EventBuilder::new(Kind::LongFormTextNote, content)
+        .tags(tags)
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;
