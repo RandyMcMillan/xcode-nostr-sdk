@@ -1,5 +1,3 @@
-# [xcode-rust-example](https://randymcmillan.github.io/xcode-rust-example/)
-
 ![Xcode](assets/swift-rust.png)
 
 [![pages-build-deployment](https://github.com/RandyMcMillan/xcode-rust-example/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/RandyMcMillan/xcode-rust-example/actions/workflows/pages/pages-build-deployment)
