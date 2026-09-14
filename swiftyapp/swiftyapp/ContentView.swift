@@ -262,6 +262,62 @@ struct ContentView: View {
     @State private var clientTargetRelay = "wss://relay.damus.io"
     @State private var clientRemoveRelay = ""
 
+    // NIP-38 User Status
+    @State private var userStatusType = "general"
+    @State private var userStatusContent = "Building on Nostr"
+    @State private var userStatusRef = ""
+    @State private var userStatusJson = ""
+
+    // NIP-39 External Identities
+    @State private var metadataIdentities = "github:alice:proof123"
+    @State private var metadataWithIdentitiesJson = ""
+
+    // NIP-49 ncryptsec
+    @State private var nip49Password = ""
+    @State private var nip49LogN: UInt8 = 16
+    @State private var nip49Ncryptsec = ""
+    @State private var nip49Decrypted = ""
+
+    // NIP-30 Custom Emoji
+    @State private var emojiList = "rust:https://example.com/rust.png,swift:https://example.com/swift.png"
+    @State private var emojiListJson = ""
+
+    // NIP-89 App Handler
+    @State private var appKind: UInt16 = 1
+    @State private var appHandlerId = ""
+    @State private var appHandlerPubkey = ""
+    @State private var appHandlerJson = ""
+
+    // Generic Event Builder
+    @State private var genericKind: UInt16 = 1
+    @State private var genericContent = "Hello Nostr"
+    @State private var genericTags = "[[\"p\",\"0000...\"]]"
+    @State private var genericJson = ""
+
+    // Filter with Search
+    @State private var searchFilterAuthors = ""
+    @State private var searchFilterKinds = "0,1"
+    @State private var searchQuery = "nostr"
+    @State private var searchFilterJson = ""
+
+    // NIP-46 Nostr Connect
+    @State private var nconnectMessage = ""
+    @State private var nconnectParsed = ""
+    @State private var nconnectReqId = ""
+    @State private var nconnectResponse = ""
+
+    // Event Tag Values
+    @State private var tagEventInput = ""
+    @State private var tagName = "p"
+    @State private var tagValuesResult: [String] = []
+
+    // NIP-34 Git Issue
+    @State private var gitRepoPubkey = ""
+    @State private var gitIssueSubject = "Bug report"
+    @State private var gitIssueContent = "Found a bug in the repo"
+    @State private var gitIssueLabels = "bug,urgent"
+    @State private var gitIssueJson = ""
+
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
     }
@@ -2387,6 +2443,366 @@ struct ContentView: View {
                                         .font(.caption.weight(.semibold))
                                         .foregroundStyle(primaryText.opacity(0.84))
                                 }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("User Status (NIP-38)", systemImage: "person.fill.checkmark")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Status type (general/music/custom)", text: $userStatusType)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Status content", text: $userStatusContent)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Reference URL (optional)", text: $userStatusRef)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                userStatusJson = (try? createUserStatus(
+                                    secretKey: nsecKey,
+                                    statusType: userStatusType,
+                                    content: userStatusContent,
+                                    expirationSecs: 0,
+                                    referenceUrl: userStatusRef
+                                )) ?? ""
+                            } label: {
+                                Label("Create Status", systemImage: "person.fill.checkmark")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !userStatusJson.isEmpty {
+                                jsonBlock(userStatusJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Metadata + Identities (NIP-39)", systemImage: "person.crop.circle.badge.checkmark")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Name", text: $metadataName)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("About", text: $metadataAbout)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Picture URL", text: $metadataPicture)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Identities (comma-separated platform:ident:proof)", text: $metadataIdentities)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let ids = metadataIdentities.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                metadataWithIdentitiesJson = (try? createMetadataWithIdentities(
+                                    secretKey: nsecKey,
+                                    name: metadataName,
+                                    about: metadataAbout,
+                                    picture: metadataPicture,
+                                    identities: ids
+                                )) ?? ""
+                            } label: {
+                                Label("Create Metadata", systemImage: "person.crop.circle.badge.checkmark")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !metadataWithIdentitiesJson.isEmpty {
+                                jsonBlock(metadataWithIdentitiesJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("ncryptsec (NIP-49)", systemImage: "lock.shield.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Password", text: $nip49Password)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("log_n (default 16)", value: $nip49LogN, format: .number)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                nip49Ncryptsec = (try? nip49Encrypt(secretKey: nsecKey, password: nip49Password, logN: nip49LogN)) ?? ""
+                            } label: {
+                                Label("Encrypt nsec", systemImage: "lock.shield.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty || nip49Password.isEmpty)
+                            if !nip49Ncryptsec.isEmpty {
+                                keyRow(label: "ncryptsec", value: nip49Ncryptsec)
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            TextField("ncryptsec", text: $nip49Ncryptsec)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                nip49Decrypted = (try? nip49Decrypt(ncryptsec: nip49Ncryptsec, password: nip49Password)) ?? ""
+                            } label: {
+                                Label("Decrypt nsec", systemImage: "lock.open.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nip49Ncryptsec.isEmpty || nip49Password.isEmpty)
+                            if !nip49Decrypted.isEmpty {
+                                keyRow(label: "Decrypted nsec", value: nip49Decrypted)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Custom Emoji (NIP-30)", systemImage: "face.smiling.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Emojis (name:url, ...)", text: $emojiList)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let emojis = emojiList.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                emojiListJson = (try? createCustomEmojiList(secretKey: nsecKey, emojis: emojis)) ?? ""
+                            } label: {
+                                Label("Create Emoji List", systemImage: "face.smiling.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !emojiListJson.isEmpty {
+                                jsonBlock(emojiListJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("App Handler (NIP-89)", systemImage: "app.badge.checkmark.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("App Kind", value: $appKind, format: .number)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Handler Event ID (hex)", text: $appHandlerId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Handler Pubkey (hex)", text: $appHandlerPubkey)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                appHandlerJson = (try? createAppHandlerRecommendation(
+                                    secretKey: nsecKey,
+                                    appKind: appKind,
+                                    handlerEventIdHex: appHandlerId,
+                                    handlerPubkeyHex: appHandlerPubkey,
+                                    relayUrls: []
+                                )) ?? ""
+                            } label: {
+                                Label("Recommend Handler", systemImage: "app.badge.checkmark.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty || appHandlerId.isEmpty || appHandlerPubkey.isEmpty)
+                            if !appHandlerJson.isEmpty {
+                                jsonBlock(appHandlerJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Generic Event Builder", systemImage: "hammer.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Kind", value: $genericKind, format: .number)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Content", text: $genericContent)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextEditor(text: $genericTags)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            Button {
+                                genericJson = (try? createGenericEvent(
+                                    secretKey: nsecKey,
+                                    kind: genericKind,
+                                    content: genericContent,
+                                    tagsJson: genericTags
+                                )) ?? ""
+                            } label: {
+                                Label("Build Event", systemImage: "hammer.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !genericJson.isEmpty {
+                                jsonBlock(genericJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Filter + Search (NIP-50)", systemImage: "magnifyingglass.circle.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Authors (comma-separated hex)", text: $searchFilterAuthors)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Kinds (comma-separated)", text: $searchFilterKinds)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Search query", text: $searchQuery)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let authors = searchFilterAuthors.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                let kinds = searchFilterKinds.split(separator: ",").compactMap { UInt16($0.trimmingCharacters(in: .whitespaces)) }
+                                searchFilterJson = (try? buildFilterWithSearch(
+                                    authorsHex: authors,
+                                    kinds: kinds,
+                                    search: searchQuery,
+                                    sinceSecs: 0,
+                                    untilSecs: 0,
+                                    limit: 100
+                                )) ?? ""
+                            } label: {
+                                Label("Build Search Filter", systemImage: "magnifyingglass.circle.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            if !searchFilterJson.isEmpty {
+                                jsonBlock(searchFilterJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Nostr Connect (NIP-46)", systemImage: "link.circle.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextEditor(text: $nconnectMessage)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            Button {
+                                nconnectParsed = (try? nostrConnectParseRequest(messageJson: nconnectMessage)) ?? ""
+                            } label: {
+                                Label("Parse Request", systemImage: "doc.text.magnifyingglass")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nconnectMessage.isEmpty)
+                            if !nconnectParsed.isEmpty {
+                                Text(nconnectParsed)
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(primaryText.opacity(0.84))
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            TextField("Request ID", text: $nconnectReqId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                nconnectResponse = (try? nostrConnectCreateResponse(reqId: nconnectReqId, result: "ack", error: nil)) ?? ""
+                            } label: {
+                                Label("Create Response", systemImage: "arrowshape.turn.up.left.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nconnectReqId.isEmpty)
+                            if !nconnectResponse.isEmpty {
+                                jsonBlock(nconnectResponse)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Event Tag Values", systemImage: "tag.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextEditor(text: $tagEventInput)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            TextField("Tag name", text: $tagName)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                tagValuesResult = (try? eventTagValues(eventJson: tagEventInput, tagName: tagName)) ?? []
+                            } label: {
+                                Label("Extract Tags", systemImage: "tag.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(tagEventInput.isEmpty)
+                            if !tagValuesResult.isEmpty {
+                                ForEach(tagValuesResult.indices, id: \.self) { i in
+                                    Text(tagValuesResult[i])
+                                        .font(.caption.monospaced())
+                                        .foregroundStyle(primaryText.opacity(0.84))
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Git Issue (NIP-34)", systemImage: "curlybraces.square.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Repo Pubkey (hex)", text: $gitRepoPubkey)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Subject", text: $gitIssueSubject)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextEditor(text: $gitIssueContent)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            TextField("Labels (comma-separated)", text: $gitIssueLabels)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let labels = gitIssueLabels.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                gitIssueJson = (try? createGitIssue(
+                                    secretKey: nsecKey,
+                                    repoPubkeyHex: gitRepoPubkey,
+                                    content: gitIssueContent,
+                                    subject: gitIssueSubject,
+                                    labels: labels
+                                )) ?? ""
+                            } label: {
+                                Label("Create Issue", systemImage: "curlybraces.square.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty || gitRepoPubkey.isEmpty)
+                            if !gitIssueJson.isEmpty {
+                                jsonBlock(gitIssueJson)
                             }
                         }
                     }

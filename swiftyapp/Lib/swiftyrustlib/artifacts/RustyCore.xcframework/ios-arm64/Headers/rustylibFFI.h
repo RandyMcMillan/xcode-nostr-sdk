@@ -322,6 +322,16 @@ RustBuffer uniffi_rustylib_fn_func_add_expiration_to_event(RustBuffer secret_key
 RustBuffer uniffi_rustylib_fn_func_build_filter(RustBuffer authors_hex, RustBuffer kinds, RustBuffer ids_hex, uint64_t since_secs, uint64_t until_secs, uint64_t limit, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_BUILD_FILTER_WITH_SEARCH
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_BUILD_FILTER_WITH_SEARCH
+RustBuffer uniffi_rustylib_fn_func_build_filter_with_search(RustBuffer authors_hex, RustBuffer kinds, RustBuffer search, uint64_t since_secs, uint64_t until_secs, uint64_t limit, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_APP_HANDLER_RECOMMENDATION
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_APP_HANDLER_RECOMMENDATION
+RustBuffer uniffi_rustylib_fn_func_create_app_handler_recommendation(RustBuffer secret_key, uint16_t app_kind, RustBuffer handler_event_id_hex, RustBuffer handler_pubkey_hex, RustBuffer relay_urls, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_AUTH_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_AUTH_EVENT
 RustBuffer uniffi_rustylib_fn_func_create_auth_event(RustBuffer secret_key, RustBuffer challenge, RustBuffer relay_url, RustCallStatus *_Nonnull out_status
@@ -347,6 +357,11 @@ RustBuffer uniffi_rustylib_fn_func_create_bookmarks(RustBuffer secret_key, RustB
 RustBuffer uniffi_rustylib_fn_func_create_contact_list(RustBuffer secret_key, RustBuffer pubkeys_hex, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CUSTOM_EMOJI_LIST
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_CUSTOM_EMOJI_LIST
+RustBuffer uniffi_rustylib_fn_func_create_custom_emoji_list(RustBuffer secret_key, RustBuffer emojis, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_DELETION_REQUEST
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_DELETION_REQUEST
 RustBuffer uniffi_rustylib_fn_func_create_deletion_request(RustBuffer secret_key, RustBuffer event_ids_hex, RustBuffer reason, RustCallStatus *_Nonnull out_status
@@ -362,9 +377,19 @@ RustBuffer uniffi_rustylib_fn_func_create_external_content_event(RustBuffer secr
 RustBuffer uniffi_rustylib_fn_func_create_file_metadata(RustBuffer secret_key, RustBuffer description, RustBuffer url, RustBuffer mime_type, RustBuffer hash_hex, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_GENERIC_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_GENERIC_EVENT
+RustBuffer uniffi_rustylib_fn_func_create_generic_event(RustBuffer secret_key, uint16_t kind, RustBuffer content, RustBuffer tags_json, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_GIFT_WRAP
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_GIFT_WRAP
 RustBuffer uniffi_rustylib_fn_func_create_gift_wrap(RustBuffer secret_key, RustBuffer recipient_pubkey_hex, uint16_t rumor_kind, RustBuffer rumor_content, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_GIT_ISSUE
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_GIT_ISSUE
+RustBuffer uniffi_rustylib_fn_func_create_git_issue(RustBuffer secret_key, RustBuffer repo_pubkey_hex, RustBuffer content, RustBuffer subject, RustBuffer labels, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_HTTP_AUTH
@@ -395,6 +420,11 @@ RustBuffer uniffi_rustylib_fn_func_create_long_form(RustBuffer secret_key, RustB
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_METADATA_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_METADATA_EVENT
 RustBuffer uniffi_rustylib_fn_func_create_metadata_event(RustBuffer secret_key, RustBuffer name, RustBuffer about, RustBuffer picture, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_METADATA_WITH_IDENTITIES
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_METADATA_WITH_IDENTITIES
+RustBuffer uniffi_rustylib_fn_func_create_metadata_with_identities(RustBuffer secret_key, RustBuffer name, RustBuffer about, RustBuffer picture, RustBuffer identities, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_MUTE_LIST
@@ -467,6 +497,11 @@ RustBuffer uniffi_rustylib_fn_func_create_text_note(RustBuffer secret_key, RustB
 RustBuffer uniffi_rustylib_fn_func_create_thread_reply(RustBuffer secret_key, RustBuffer content, RustBuffer root_event_id_hex, RustBuffer reply_to_event_id_hex, RustBuffer reply_to_author_pubkey_hex, RustCallStatus *_Nonnull out_status
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_USER_STATUS
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_USER_STATUS
+RustBuffer uniffi_rustylib_fn_func_create_user_status(RustBuffer secret_key, RustBuffer status_type, RustBuffer content, uint64_t expiration_secs, RustBuffer reference_url, RustCallStatus *_Nonnull out_status
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_VANISH_REQUEST
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_CREATE_VANISH_REQUEST
 RustBuffer uniffi_rustylib_fn_func_create_vanish_request(RustBuffer secret_key, RustBuffer reason, RustBuffer relay_urls, RustCallStatus *_Nonnull out_status
@@ -510,6 +545,11 @@ RustBuffer uniffi_rustylib_fn_func_event_pubkey_hex(RustBuffer event_json, RustC
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_EVENT_SIGNATURE_VALID
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_EVENT_SIGNATURE_VALID
 int8_t uniffi_rustylib_fn_func_event_signature_valid(RustBuffer event_json, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_EVENT_TAG_VALUES
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_EVENT_TAG_VALUES
+RustBuffer uniffi_rustylib_fn_func_event_tag_values(RustBuffer event_json, RustBuffer tag_name, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_EVENT_TAGS_JSON
@@ -606,6 +646,26 @@ RustBuffer uniffi_rustylib_fn_func_nip44_decrypt(RustBuffer secret_key, RustBuff
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NIP44_ENCRYPT
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NIP44_ENCRYPT
 RustBuffer uniffi_rustylib_fn_func_nip44_encrypt(RustBuffer secret_key, RustBuffer recipient_pubkey, RustBuffer content, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NIP49_DECRYPT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NIP49_DECRYPT
+RustBuffer uniffi_rustylib_fn_func_nip49_decrypt(RustBuffer ncryptsec, RustBuffer password, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NIP49_ENCRYPT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NIP49_ENCRYPT
+RustBuffer uniffi_rustylib_fn_func_nip49_encrypt(RustBuffer secret_key, RustBuffer password, uint8_t log_n, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NOSTR_CONNECT_CREATE_RESPONSE
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NOSTR_CONNECT_CREATE_RESPONSE
+RustBuffer uniffi_rustylib_fn_func_nostr_connect_create_response(RustBuffer req_id, RustBuffer _result, RustBuffer error, RustCallStatus *_Nonnull out_status
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NOSTR_CONNECT_PARSE_REQUEST
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_NOSTR_CONNECT_PARSE_REQUEST
+RustBuffer uniffi_rustylib_fn_func_nostr_connect_parse_request(RustBuffer message_json, RustCallStatus *_Nonnull out_status
 );
 #endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_FN_FUNC_PARSE_NIP05_PROFILE
@@ -926,6 +986,18 @@ uint16_t uniffi_rustylib_checksum_func_build_filter(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_BUILD_FILTER_WITH_SEARCH
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_BUILD_FILTER_WITH_SEARCH
+uint16_t uniffi_rustylib_checksum_func_build_filter_with_search(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_APP_HANDLER_RECOMMENDATION
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_APP_HANDLER_RECOMMENDATION
+uint16_t uniffi_rustylib_checksum_func_create_app_handler_recommendation(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_AUTH_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_AUTH_EVENT
 uint16_t uniffi_rustylib_checksum_func_create_auth_event(void
@@ -956,6 +1028,12 @@ uint16_t uniffi_rustylib_checksum_func_create_contact_list(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CUSTOM_EMOJI_LIST
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_CUSTOM_EMOJI_LIST
+uint16_t uniffi_rustylib_checksum_func_create_custom_emoji_list(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_DELETION_REQUEST
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_DELETION_REQUEST
 uint16_t uniffi_rustylib_checksum_func_create_deletion_request(void
@@ -974,9 +1052,21 @@ uint16_t uniffi_rustylib_checksum_func_create_file_metadata(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_GENERIC_EVENT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_GENERIC_EVENT
+uint16_t uniffi_rustylib_checksum_func_create_generic_event(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_GIFT_WRAP
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_GIFT_WRAP
 uint16_t uniffi_rustylib_checksum_func_create_gift_wrap(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_GIT_ISSUE
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_GIT_ISSUE
+uint16_t uniffi_rustylib_checksum_func_create_git_issue(void
     
 );
 #endif
@@ -1013,6 +1103,12 @@ uint16_t uniffi_rustylib_checksum_func_create_long_form(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_METADATA_EVENT
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_METADATA_EVENT
 uint16_t uniffi_rustylib_checksum_func_create_metadata_event(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_METADATA_WITH_IDENTITIES
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_METADATA_WITH_IDENTITIES
+uint16_t uniffi_rustylib_checksum_func_create_metadata_with_identities(void
     
 );
 #endif
@@ -1100,6 +1196,12 @@ uint16_t uniffi_rustylib_checksum_func_create_thread_reply(void
     
 );
 #endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_USER_STATUS
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_USER_STATUS
+uint16_t uniffi_rustylib_checksum_func_create_user_status(void
+    
+);
+#endif
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_VANISH_REQUEST
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_CREATE_VANISH_REQUEST
 uint16_t uniffi_rustylib_checksum_func_create_vanish_request(void
@@ -1151,6 +1253,12 @@ uint16_t uniffi_rustylib_checksum_func_event_pubkey_hex(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_EVENT_SIGNATURE_VALID
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_EVENT_SIGNATURE_VALID
 uint16_t uniffi_rustylib_checksum_func_event_signature_valid(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_EVENT_TAG_VALUES
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_EVENT_TAG_VALUES
+uint16_t uniffi_rustylib_checksum_func_event_tag_values(void
     
 );
 #endif
@@ -1265,6 +1373,30 @@ uint16_t uniffi_rustylib_checksum_func_nip44_decrypt(void
 #ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NIP44_ENCRYPT
 #define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NIP44_ENCRYPT
 uint16_t uniffi_rustylib_checksum_func_nip44_encrypt(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NIP49_DECRYPT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NIP49_DECRYPT
+uint16_t uniffi_rustylib_checksum_func_nip49_decrypt(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NIP49_ENCRYPT
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NIP49_ENCRYPT
+uint16_t uniffi_rustylib_checksum_func_nip49_encrypt(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NOSTR_CONNECT_CREATE_RESPONSE
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NOSTR_CONNECT_CREATE_RESPONSE
+uint16_t uniffi_rustylib_checksum_func_nostr_connect_create_response(void
+    
+);
+#endif
+#ifndef UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NOSTR_CONNECT_PARSE_REQUEST
+#define UNIFFI_FFIDEF_UNIFFI_RUSTYLIB_CHECKSUM_FUNC_NOSTR_CONNECT_PARSE_REQUEST
+uint16_t uniffi_rustylib_checksum_func_nostr_connect_parse_request(void
     
 );
 #endif

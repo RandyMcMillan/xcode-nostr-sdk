@@ -1375,6 +1375,7 @@ version = "0.1.0"
 dependencies = [
  "nostr",
  "nostr-sdk",
+ "serde_json",
  "tokio",
  "uniffi",
 ]

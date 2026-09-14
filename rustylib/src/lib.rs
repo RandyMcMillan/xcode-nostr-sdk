@@ -1188,6 +1188,229 @@ impl NostrClient {
 }
 
 #[uniffi::export]
+pub fn create_user_status(
+    secret_key: String,
+    status_type: String,
+    content: String,
+    expiration_secs: u64,
+    reference_url: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let st = match status_type.as_str() {
+        "music" => StatusType::Music,
+        "general" => StatusType::General,
+        s => StatusType::Custom(s.to_string()),
+    };
+    let mut status = LiveStatus::new(st);
+    if expiration_secs > 0 {
+        status.expiration = Some(Timestamp::from_secs(expiration_secs));
+    }
+    if !reference_url.is_empty() {
+        status.reference = Some(reference_url);
+    }
+    let event = LiveStatusEvent::new(status, content).finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_metadata_with_identities(
+    secret_key: String,
+    name: String,
+    about: String,
+    picture: String,
+    identities: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let mut metadata = Metadata::new().name(name).about(about);
+    if let Ok(url) = Url::parse(&picture) {
+        metadata = metadata.picture(url);
+    }
+    let mut builder = metadata.into_event_builder();
+    for identity_str in identities {
+        let parts: Vec<&str> = identity_str.splitn(3, ':').collect();
+        if parts.len() == 3 {
+            let platform_ident = format!("{}:{}", parts[0], parts[1]);
+            let proof = parts[2];
+            builder = builder.tags([Tag::parse(["i", &platform_ident, proof])?]);
+        }
+    }
+    let event = builder.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn nip49_encrypt(secret_key: String, password: String, log_n: u8) -> Result<String, NostrError> {
+    let sk = SecretKey::from_hex(&secret_key)?;
+    let security = KeySecurity::Medium;
+    let encrypted = EncryptedSecretKey::new(&sk, &password, log_n, security)?;
+    Ok(encrypted.to_bech32()?)
+}
+
+#[uniffi::export]
+pub fn nip49_decrypt(ncryptsec: String, password: String) -> Result<String, NostrError> {
+    let encrypted = EncryptedSecretKey::from_bech32(&ncryptsec)?;
+    let sk = encrypted.decrypt(&password)?;
+    Ok(sk.to_secret_hex())
+}
+
+#[uniffi::export]
+pub fn create_git_issue(
+    secret_key: String,
+    repo_pubkey_hex: String,
+    content: String,
+    subject: String,
+    labels: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let repo_pk = PublicKey::from_hex(&repo_pubkey_hex)?;
+    let coordinate = Coordinate::new(Kind::GitRepoAnnouncement, repo_pk);
+    let issue = GitIssue {
+        repository: coordinate,
+        content,
+        subject: if subject.is_empty() { None } else { Some(subject) },
+        labels,
+    };
+    let event = issue.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_custom_emoji_list(
+    secret_key: String,
+    emojis: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let mut tags: Vec<Tag> = Vec::new();
+    for emoji in emojis {
+        let parts: Vec<&str> = emoji.splitn(3, ':').collect();
+        if parts.len() == 3 {
+            tags.push(Tag::parse(["emoji", parts[0], parts[1], parts[2]])?);
+        }
+    }
+    let event = EventBuilder::new(Kind::from(10030u16), "")
+        .tags(tags)
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_app_handler_recommendation(
+    secret_key: String,
+    app_kind: u16,
+    handler_event_id_hex: String,
+    handler_pubkey_hex: String,
+    relay_urls: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let handler_id = EventId::from_hex(&handler_event_id_hex)?;
+    let handler_pk = PublicKey::from_hex(&handler_pubkey_hex)?;
+    let mut tags: Vec<Tag> = vec![
+        Tag::parse(["d", &app_kind.to_string()])?,
+        Tag::parse(["a", &format!("{}:{}", app_kind, handler_pubkey_hex)])?,
+        Tag::event(handler_id),
+        Tag::public_key(handler_pk),
+    ];
+    for url in relay_urls {
+        if let Ok(relay) = RelayUrl::parse(&url) {
+            tags.push(Tag::parse(["relay", relay.as_str()])?);
+        }
+    }
+    let event = EventBuilder::new(Kind::from(31989u16), "")
+        .tags(tags)
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_generic_event(
+    secret_key: String,
+    kind: u16,
+    content: String,
+    tags_json: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let mut builder = EventBuilder::new(Kind::from(kind), content);
+    let tags: Vec<Vec<String>> = serde_json::from_str(&tags_json)
+        .map_err(|e| NostrError::Invalid(format!("invalid tags JSON: {}", e)))?;
+    for tag_vals in tags {
+        builder = builder.tags([Tag::parse(tag_vals)?]);
+    }
+    let event = builder.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn build_filter_with_search(
+    authors_hex: Vec<String>,
+    kinds: Vec<u16>,
+    search: String,
+    since_secs: u64,
+    until_secs: u64,
+    limit: u64,
+) -> Result<String, NostrError> {
+    let mut filter = Filter::new();
+    if !authors_hex.is_empty() {
+        let authors: Vec<PublicKey> = authors_hex
+            .into_iter()
+            .map(|hex| PublicKey::from_hex(&hex))
+            .collect::<Result<Vec<_>, _>>()?;
+        filter = filter.authors(authors);
+    }
+    if !kinds.is_empty() {
+        let kind_set: Vec<Kind> = kinds.into_iter().map(Kind::from).collect();
+        filter = filter.kinds(kind_set);
+    }
+    if !search.is_empty() {
+        filter = filter.search(search);
+    }
+    if since_secs > 0 {
+        filter = filter.since(Timestamp::from_secs(since_secs));
+    }
+    if until_secs > 0 {
+        filter = filter.until(Timestamp::from_secs(until_secs));
+    }
+    if limit > 0 {
+        filter = filter.limit(limit as usize);
+    }
+    Ok(filter.as_json())
+}
+
+#[uniffi::export]
+pub fn nostr_connect_parse_request(message_json: String) -> Result<String, NostrError> {
+    let msg = NostrConnectMessage::from_json(&message_json)?;
+    let req = msg.to_request()?;
+    Ok(format!("method={}, params={:?}", req.method().to_string(), req.params()))
+}
+
+#[uniffi::export]
+pub fn nostr_connect_create_response(
+    req_id: String,
+    _result: String,
+    error: Option<String>,
+) -> Result<String, NostrError> {
+    let res = if let Some(err) = error {
+        NostrConnectResponse::with_error(err)
+    } else {
+        NostrConnectResponse::with_result(nip46::ResponseResult::Ack)
+    };
+    let msg = NostrConnectMessage::response(req_id, res);
+    Ok(msg.as_json())
+}
+
+#[uniffi::export]
+pub fn event_tag_values(event_json: String, tag_name: String) -> Result<Vec<String>, NostrError> {
+    let event = Event::from_json(event_json)?;
+    let mut values = Vec::new();
+    for tag in event.tags.iter() {
+        let slice = tag.as_slice();
+        if slice.first() == Some(&tag_name) {
+            values.push(slice.join(","));
+        }
+    }
+    Ok(values)
+}
+
+#[uniffi::export]
 fn rust_hello() -> String {
     "Hello from Rust!".to_string()
 }
