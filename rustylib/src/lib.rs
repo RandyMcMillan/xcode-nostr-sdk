@@ -510,6 +510,118 @@ pub fn create_long_form(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn create_report_event(
+    secret_key: String,
+    target_event_id: Option<String>,
+    target_pubkey: Option<String>,
+    report_type: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let report = match report_type.as_str() {
+        "nudity" => Report::Nudity,
+        "malware" => Report::Malware,
+        "profanity" => Report::Profanity,
+        "illegal" => Report::Illegal,
+        "spam" => Report::Spam,
+        "impersonation" => Report::Impersonation,
+        _ => Report::Other,
+    };
+    let tag = if let Some(hex) = target_event_id {
+        Tag::parse(["e", &hex, &report.to_string()])?
+    } else if let Some(hex) = target_pubkey {
+        Tag::parse(["p", &hex, &report.to_string()])?
+    } else {
+        return Err(NostrError::Invalid("Provide either target_event_id or target_pubkey".to_string()));
+    };
+    let event = EventBuilder::new(Kind::Reporting, "").tags([tag]).finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_badge_definition(
+    secret_key: String,
+    badge_id: String,
+    name: String,
+    description: String,
+    image_url: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let mut badge = nip58::BadgeDefinition::new(badge_id);
+    if !name.is_empty() {
+        badge = badge.name(name);
+    }
+    if !description.is_empty() {
+        badge = badge.description(description);
+    }
+    if let Ok(url) = Url::parse(&image_url) {
+        badge = badge.image(url, None);
+    }
+    let event = badge.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_badge_award(
+    secret_key: String,
+    badge_definition_json: String,
+    awarded_pubkeys_hex: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let badge_event = Event::from_json(badge_definition_json)?;
+    let pubkeys: Vec<PublicKey> = awarded_pubkeys_hex
+        .into_iter()
+        .map(|hex| PublicKey::from_hex(&hex))
+        .collect::<Result<Vec<_>, _>>()?;
+    let award = nip58::BadgeAward::new(&badge_event, pubkeys)?;
+    let event = award.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_mute_list(
+    secret_key: String,
+    pubkeys_hex: Vec<String>,
+    event_ids_hex: Vec<String>,
+    words: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let pubkeys: Vec<PublicKey> = pubkeys_hex
+        .into_iter()
+        .map(|hex| PublicKey::from_hex(&hex))
+        .collect::<Result<Vec<_>, _>>()?;
+    let event_ids: Vec<EventId> = event_ids_hex
+        .into_iter()
+        .map(|hex| EventId::from_hex(&hex))
+        .collect::<Result<Vec<_>, _>>()?;
+    let list = MuteList {
+        public_keys: pubkeys,
+        hashtags: Vec::new(),
+        event_ids,
+        words,
+    };
+    let event = list.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_bookmarks(
+    secret_key: String,
+    event_ids_hex: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event_ids: Vec<EventId> = event_ids_hex
+        .into_iter()
+        .map(|hex| EventId::from_hex(&hex))
+        .collect::<Result<Vec<_>, _>>()?;
+    let bookmarks = Bookmarks {
+        event_ids,
+        coordinate: Vec::new(),
+    };
+    let event = bookmarks.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;

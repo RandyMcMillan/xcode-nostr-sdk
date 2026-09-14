@@ -986,6 +986,34 @@ public func createAuthEvent(secretKey: String, challenge: String, relayUrl: Stri
     )
 })
 }
+public func createBadgeAward(secretKey: String, badgeDefinitionJson: String, awardedPubkeysHex: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_badge_award(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(badgeDefinitionJson),
+        FfiConverterSequenceString.lower(awardedPubkeysHex),$0
+    )
+})
+}
+public func createBadgeDefinition(secretKey: String, badgeId: String, name: String, description: String, imageUrl: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_badge_definition(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(badgeId),
+        FfiConverterString.lower(name),
+        FfiConverterString.lower(description),
+        FfiConverterString.lower(imageUrl),$0
+    )
+})
+}
+public func createBookmarks(secretKey: String, eventIdsHex: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_bookmarks(
+        FfiConverterString.lower(secretKey),
+        FfiConverterSequenceString.lower(eventIdsHex),$0
+    )
+})
+}
 public func createContactList(secretKey: String, pubkeysHex: [String])throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_contact_list(
@@ -1045,6 +1073,16 @@ public func createMetadataEvent(secretKey: String, name: String, about: String, 
     )
 })
 }
+public func createMuteList(secretKey: String, pubkeysHex: [String], eventIdsHex: [String], words: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_mute_list(
+        FfiConverterString.lower(secretKey),
+        FfiConverterSequenceString.lower(pubkeysHex),
+        FfiConverterSequenceString.lower(eventIdsHex),
+        FfiConverterSequenceString.lower(words),$0
+    )
+})
+}
 public func createPrivateMessage(secretKey: String, recipientPubkeyHex: String, message: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_private_message(
@@ -1070,6 +1108,16 @@ public func createRelayList(secretKey: String, relays: [RelayEntry])throws  -> S
     uniffi_rustylib_fn_func_create_relay_list(
         FfiConverterString.lower(secretKey),
         FfiConverterSequenceTypeRelayEntry.lower(relays),$0
+    )
+})
+}
+public func createReportEvent(secretKey: String, targetEventId: String?, targetPubkey: String?, reportType: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_report_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterOptionString.lower(targetEventId),
+        FfiConverterOptionString.lower(targetPubkey),
+        FfiConverterString.lower(reportType),$0
     )
 })
 }
@@ -1276,6 +1324,15 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_auth_event() != 21386) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_badge_award() != 26623) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_badge_definition() != 38975) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_bookmarks() != 33227) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_contact_list() != 61521) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1294,6 +1351,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_metadata_event() != 38004) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_mute_list() != 58171) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_private_message() != 43144) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1301,6 +1361,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_relay_list() != 29302) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_report_event() != 11111) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_repost() != 65279) {

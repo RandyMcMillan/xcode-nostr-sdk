@@ -124,6 +124,29 @@ struct ContentView: View {
     @State private var lfPublishedAt: UInt64 = 0
     @State private var lfJson = ""
 
+    // Reporting (NIP-56)
+    @State private var reportEventId = ""
+    @State private var reportPubkey = ""
+    @State private var reportType = "spam"
+    @State private var reportJson = ""
+
+    // Badges (NIP-58)
+    @State private var badgeId = "my-badge"
+    @State private var badgeName = "Early Adopter"
+    @State private var badgeDescription = "For early supporters"
+    @State private var badgeImage = "https://example.com/badge.png"
+    @State private var badgeJson = ""
+    @State private var badgeAwardPubkeys = ""
+    @State private var badgeAwardJson = ""
+
+    // Lists (NIP-51)
+    @State private var mutePubkeys = ""
+    @State private var muteEventIds = ""
+    @State private var muteWords = ""
+    @State private var muteJson = ""
+    @State private var bookmarkEventIds = ""
+    @State private var bookmarkJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -1218,6 +1241,173 @@ struct ContentView: View {
                                     Text(result ? "Matches ✓" : "No match ✗")
                                         .font(.caption.weight(.semibold))
                                         .foregroundStyle(result ? .green : .red)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Reporting (NIP-56)", systemImage: "exclamationmark.triangle.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Event ID (hex)", text: $reportEventId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Pubkey (hex)", text: $reportPubkey)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Type (spam/nudity/malware/profanity/illegal/impersonation/other)", text: $reportType)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let eventOpt: String? = reportEventId.isEmpty ? nil : reportEventId
+                                let pubkeyOpt: String? = reportPubkey.isEmpty ? nil : reportPubkey
+                                reportJson = (try? createReportEvent(
+                                    secretKey: nsecKey,
+                                    targetEventId: eventOpt,
+                                    targetPubkey: pubkeyOpt,
+                                    reportType: reportType
+                                )) ?? ""
+                            } label: {
+                                Label("Create Report", systemImage: "exclamationmark.triangle.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !reportJson.isEmpty {
+                                jsonBlock(reportJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Badges (NIP-58)", systemImage: "rosette")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Define Badge")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Badge ID", text: $badgeId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Name", text: $badgeName)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Description", text: $badgeDescription)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Image URL", text: $badgeImage)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    badgeJson = (try? createBadgeDefinition(
+                                        secretKey: nsecKey,
+                                        badgeId: badgeId,
+                                        name: badgeName,
+                                        description: badgeDescription,
+                                        imageUrl: badgeImage
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Badge", systemImage: "rosette")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !badgeJson.isEmpty {
+                                    jsonBlock(badgeJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Award Badge")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                Text("Paste the badge definition JSON above")
+                                    .font(.caption)
+                                    .foregroundStyle(primaryText.opacity(0.68))
+                                TextField("Awarded pubkeys (comma-separated)", text: $badgeAwardPubkeys)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let keys = badgeAwardPubkeys.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    badgeAwardJson = (try? createBadgeAward(
+                                        secretKey: nsecKey,
+                                        badgeDefinitionJson: badgeJson,
+                                        awardedPubkeysHex: keys
+                                    )) ?? ""
+                                } label: {
+                                    Label("Award Badge", systemImage: "rosette")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty || badgeJson.isEmpty)
+                                if !badgeAwardJson.isEmpty {
+                                    jsonBlock(badgeAwardJson)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Lists (NIP-51)", systemImage: "list.bullet.rectangle.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Mute List")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Pubkeys (comma-separated)", text: $mutePubkeys)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Event IDs (comma-separated)", text: $muteEventIds)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Words (comma-separated)", text: $muteWords)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let pks = mutePubkeys.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    let ids = muteEventIds.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    let words = muteWords.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    muteJson = (try? createMuteList(
+                                        secretKey: nsecKey,
+                                        pubkeysHex: pks,
+                                        eventIdsHex: ids,
+                                        words: words
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Mute List", systemImage: "speaker.slash.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !muteJson.isEmpty {
+                                    jsonBlock(muteJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Bookmarks")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Event IDs (comma-separated)", text: $bookmarkEventIds)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let ids = bookmarkEventIds.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    bookmarkJson = (try? createBookmarks(
+                                        secretKey: nsecKey,
+                                        eventIdsHex: ids
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Bookmarks", systemImage: "bookmark.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !bookmarkJson.isEmpty {
+                                    jsonBlock(bookmarkJson)
                                 }
                             }
                         }
