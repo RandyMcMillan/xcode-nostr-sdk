@@ -67,11 +67,37 @@ struct ContentView: View {
     @State private var relayListInput = "wss://relay.damus.io read, wss://relay.nostr.band write"
     @State private var relayListJson = ""
 
+    // Zap Request (NIP-57)
+    @State private var zapRecipient = ""
+    @State private var zapRelays = "wss://relay.damus.io"
+    @State private var zapMessage = "Great post!"
+    @State private var zapAmount: UInt64 = 21000
+    @State private var zapEventId = ""
+    @State private var zapJson = ""
+
+    // Filters
+    @State private var filterAuthors = ""
+    @State private var filterKinds = "0,1"
+    @State private var filterIds = ""
+    @State private var filterSince: UInt64 = 0
+    @State private var filterUntil: UInt64 = 0
+    @State private var filterLimit: UInt64 = 100
+    @State private var filterJson = ""
+    @State private var filterMatchEvent = ""
+    @State private var filterMatchResult: Bool? = nil
+
+    // Event Metadata
+    @State private var metadataEventInput = ""
+    @State private var metadataCreatedAt: UInt64 = 0
+    @State private var metadataKind: UInt16 = 0
+    @State private var metadataPubkey = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
     @State private var clientStatus = ""
     @State private var nostrClient: NostrClient? = nil
+    @State private var clientRelays: [String] = []
 
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
@@ -655,6 +681,42 @@ struct ContentView: View {
 
                     glassCard {
                         VStack(alignment: .leading, spacing: 16) {
+                            Label("Event Metadata", systemImage: "info.circle.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextEditor(text: $metadataEventInput)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            Button {
+                                metadataCreatedAt = (try? eventCreatedAt(eventJson: metadataEventInput)) ?? 0
+                                metadataKind = (try? eventKindValue(eventJson: metadataEventInput)) ?? 0
+                                metadataPubkey = (try? eventPubkeyHex(eventJson: metadataEventInput)) ?? ""
+                            } label: {
+                                Label("Extract Metadata", systemImage: "magnifyingglass")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            if metadataCreatedAt > 0 {
+                                keyRow(label: "Created At", value: "\(metadataCreatedAt)")
+                            }
+                            if metadataKind > 0 {
+                                keyRow(label: "Kind", value: "\(metadataKind)")
+                            }
+                            if !metadataPubkey.isEmpty {
+                                keyRow(label: "Pubkey", value: metadataPubkey)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
                             Label("More Events", systemImage: "bolt.fill")
                                 .font(.headline)
                                 .foregroundStyle(accentText)
@@ -775,6 +837,45 @@ struct ContentView: View {
 
                     glassCard {
                         VStack(alignment: .leading, spacing: 16) {
+                            Label("Zap Request (NIP-57)", systemImage: "bolt.horizontal.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Recipient pubkey (hex)", text: $zapRecipient)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Relays (comma-separated)", text: $zapRelays)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Message", text: $zapMessage)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Amount (millisats)", value: $zapAmount, format: .number)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Event ID (optional hex)", text: $zapEventId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let relays = zapRelays.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                let eventIdOpt: String? = zapEventId.isEmpty ? nil : zapEventId
+                                zapJson = (try? createZapRequest(
+                                    secretKey: nsecKey,
+                                    recipientPubkeyHex: zapRecipient,
+                                    relayUrls: relays,
+                                    message: zapMessage,
+                                    amountMillisats: zapAmount,
+                                    eventIdHex: eventIdOpt
+                                )) ?? ""
+                            } label: {
+                                Label("Create Zap Request", systemImage: "bolt.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !zapJson.isEmpty {
+                                jsonBlock(zapJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
                             Label("Relay List (NIP-65)", systemImage: "network")
                                 .font(.headline)
                                 .foregroundStyle(accentText)
@@ -801,6 +902,89 @@ struct ContentView: View {
                             .disabled(nsecKey.isEmpty)
                             if !relayListJson.isEmpty {
                                 jsonBlock(relayListJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Filters", systemImage: "line.3.horizontal.decrease.circle.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Build Filter")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Authors (comma-separated hex)", text: $filterAuthors)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Kinds (comma-separated)", text: $filterKinds)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("IDs (comma-separated hex)", text: $filterIds)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                HStack(spacing: 12) {
+                                    TextField("Since", value: $filterSince, format: .number)
+                                        .textFieldStyle(RoundedTextFieldStyle())
+                                    TextField("Until", value: $filterUntil, format: .number)
+                                        .textFieldStyle(RoundedTextFieldStyle())
+                                    TextField("Limit", value: $filterLimit, format: .number)
+                                        .textFieldStyle(RoundedTextFieldStyle())
+                                }
+                                Button {
+                                    let authors = filterAuthors.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    let kinds = filterKinds.split(separator: ",").compactMap { UInt16($0.trimmingCharacters(in: .whitespaces)) }
+                                    let ids = filterIds.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    filterJson = (try? buildFilter(
+                                        authorsHex: authors,
+                                        kinds: kinds,
+                                        idsHex: ids,
+                                        sinceSecs: filterSince,
+                                        untilSecs: filterUntil,
+                                        limit: filterLimit
+                                    )) ?? ""
+                                } label: {
+                                    Label("Build Filter", systemImage: "doc.text.magnifyingglass")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if !filterJson.isEmpty {
+                                    jsonBlock(filterJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Match Event")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextEditor(text: $filterMatchEvent)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                Button {
+                                    if let result = try? filterMatchesEvent(filterJson: filterJson, eventJson: filterMatchEvent) {
+                                        filterMatchResult = result
+                                    } else {
+                                        filterMatchResult = nil
+                                    }
+                                } label: {
+                                    Label("Test Match", systemImage: "checkmark.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(filterJson.isEmpty || filterMatchEvent.isEmpty)
+                                if let result = filterMatchResult {
+                                    Text(result ? "Matches ✓" : "No match ✗")
+                                        .font(.caption.weight(.semibold))
+                                        .foregroundStyle(result ? .green : .red)
+                                }
                             }
                         }
                     }
@@ -867,6 +1051,17 @@ struct ContentView: View {
                                 }
                                 .buttonStyle(PrimaryButtonStyle())
                                 .disabled(nostrClient == nil)
+
+                                Button {
+                                    clientRelays = nostrClient?.getRelays() ?? []
+                                    clientStatus = "Relays: \(clientRelays.joined(separator: ", "))"
+                                } label: {
+                                    Label("Get Relays", systemImage: "network")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nostrClient == nil)
+
                                 if !clientStatus.isEmpty {
                                     Text(clientStatus)
                                         .font(.caption.weight(.semibold))

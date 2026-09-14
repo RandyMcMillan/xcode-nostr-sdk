@@ -408,6 +408,19 @@ fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
     }
 }
 
+fileprivate struct FfiConverterUInt64: FfiConverterPrimitive {
+    typealias FfiType = UInt64
+    typealias SwiftType = UInt64
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> UInt64 {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
 fileprivate struct FfiConverterBool : FfiConverter {
     typealias FfiType = Int8
     typealias SwiftType = Bool
@@ -477,6 +490,8 @@ public protocol NostrClientProtocol : AnyObject {
     func connect() 
     
     func disconnect() 
+    
+    func getRelays()  -> [String]
     
     func publishEvent(eventJson: String) throws  -> String
     
@@ -548,6 +563,13 @@ open func disconnect() {try! rustCall() {
     uniffi_rustylib_fn_method_nostrclient_disconnect(self.uniffiClonePointer(),$0
     )
 }
+}
+    
+open func getRelays() -> [String] {
+    return try!  FfiConverterSequenceString.lift(try! rustCall() {
+    uniffi_rustylib_fn_method_nostrclient_get_relays(self.uniffiClonePointer(),$0
+    )
+})
 }
     
 open func publishEvent(eventJson: String)throws  -> String {
@@ -789,6 +811,49 @@ extension NostrError: Foundation.LocalizedError {
     }
 }
 
+fileprivate struct FfiConverterOptionString: FfiConverterRustBuffer {
+    typealias SwiftType = String?
+
+    public static func write(_ value: SwiftType, into buf: inout [UInt8]) {
+        guard let value = value else {
+            writeInt(&buf, Int8(0))
+            return
+        }
+        writeInt(&buf, Int8(1))
+        FfiConverterString.write(value, into: &buf)
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> SwiftType {
+        switch try readInt(&buf) as Int8 {
+        case 0: return nil
+        case 1: return try FfiConverterString.read(from: &buf)
+        default: throw UniffiInternalError.unexpectedOptionalTag
+        }
+    }
+}
+
+fileprivate struct FfiConverterSequenceUInt16: FfiConverterRustBuffer {
+    typealias SwiftType = [UInt16]
+
+    public static func write(_ value: [UInt16], into buf: inout [UInt8]) {
+        let len = Int32(value.count)
+        writeInt(&buf, len)
+        for item in value {
+            FfiConverterUInt16.write(item, into: &buf)
+        }
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> [UInt16] {
+        let len: Int32 = try readInt(&buf)
+        var seq = [UInt16]()
+        seq.reserveCapacity(Int(len))
+        for _ in 0 ..< len {
+            seq.append(try FfiConverterUInt16.read(from: &buf))
+        }
+        return seq
+    }
+}
+
 fileprivate struct FfiConverterSequenceString: FfiConverterRustBuffer {
     typealias SwiftType = [String]
 
@@ -831,6 +896,18 @@ fileprivate struct FfiConverterSequenceTypeRelayEntry: FfiConverterRustBuffer {
         }
         return seq
     }
+}
+public func buildFilter(authorsHex: [String], kinds: [UInt16], idsHex: [String], sinceSecs: UInt64, untilSecs: UInt64, limit: UInt64)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_build_filter(
+        FfiConverterSequenceString.lower(authorsHex),
+        FfiConverterSequenceUInt16.lower(kinds),
+        FfiConverterSequenceString.lower(idsHex),
+        FfiConverterUInt64.lower(sinceSecs),
+        FfiConverterUInt64.lower(untilSecs),
+        FfiConverterUInt64.lower(limit),$0
+    )
+})
 }
 public func createAuthEvent(secretKey: String, challenge: String, relayUrl: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
@@ -903,9 +980,50 @@ public func createTextNote(secretKey: String, content: String)throws  -> String 
     )
 })
 }
+public func createZapRequest(secretKey: String, recipientPubkeyHex: String, relayUrls: [String], message: String, amountMillisats: UInt64, eventIdHex: String?)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_zap_request(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(recipientPubkeyHex),
+        FfiConverterSequenceString.lower(relayUrls),
+        FfiConverterString.lower(message),
+        FfiConverterUInt64.lower(amountMillisats),
+        FfiConverterOptionString.lower(eventIdHex),$0
+    )
+})
+}
+public func eventCreatedAt(eventJson: String)throws  -> UInt64 {
+    return try  FfiConverterUInt64.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_created_at(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
 public func eventId(eventJson: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_event_id(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func eventKindValue(eventJson: String)throws  -> UInt16 {
+    return try  FfiConverterUInt16.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_kind_value(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func eventPubkeyHex(eventJson: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_pubkey_hex(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func filterMatchesEvent(filterJson: String, eventJson: String)throws  -> Bool {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_filter_matches_event(
+        FfiConverterString.lower(filterJson),
         FfiConverterString.lower(eventJson),$0
     )
 })
@@ -1026,6 +1144,9 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if (uniffi_rustylib_checksum_func_build_filter() != 14879) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_auth_event() != 21386) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1050,7 +1171,22 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_text_note() != 25343) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_zap_request() != 46769) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_created_at() != 26784) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_event_id() != 29818) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_kind_value() != 33501) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_pubkey_hex() != 60026) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_filter_matches_event() != 62926) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_generate_keys() != 9672) {
@@ -1099,6 +1235,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_method_nostrclient_disconnect() != 59198) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_method_nostrclient_get_relays() != 12228) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_method_nostrclient_publish_event() != 55850) {

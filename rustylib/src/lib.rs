@@ -324,6 +324,94 @@ pub fn create_auth_event(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn create_zap_request(
+    secret_key: String,
+    recipient_pubkey_hex: String,
+    relay_urls: Vec<String>,
+    message: String,
+    amount_millisats: u64,
+    event_id_hex: Option<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let recipient = PublicKey::from_hex(&recipient_pubkey_hex)?;
+    let relays: Vec<RelayUrl> = relay_urls
+        .into_iter()
+        .map(|url| RelayUrl::parse(&url))
+        .collect::<Result<Vec<_>, _>>()?;
+    let mut data = ZapRequestData::new(recipient, relays).message(message).amount(amount_millisats);
+    if let Some(hex) = event_id_hex {
+        data = data.event_id(EventId::from_hex(&hex)?);
+    }
+    let event = data.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn build_filter(
+    authors_hex: Vec<String>,
+    kinds: Vec<u16>,
+    ids_hex: Vec<String>,
+    since_secs: u64,
+    until_secs: u64,
+    limit: u64,
+) -> Result<String, NostrError> {
+    let mut filter = Filter::new();
+    if !authors_hex.is_empty() {
+        let authors: Vec<PublicKey> = authors_hex
+            .into_iter()
+            .map(|hex| PublicKey::from_hex(&hex))
+            .collect::<Result<Vec<_>, _>>()?;
+        filter = filter.authors(authors);
+    }
+    if !kinds.is_empty() {
+        let kind_set: Vec<Kind> = kinds.into_iter().map(Kind::from).collect();
+        filter = filter.kinds(kind_set);
+    }
+    if !ids_hex.is_empty() {
+        let ids: Vec<EventId> = ids_hex
+            .into_iter()
+            .map(|hex| EventId::from_hex(&hex))
+            .collect::<Result<Vec<_>, _>>()?;
+        filter = filter.ids(ids);
+    }
+    if since_secs > 0 {
+        filter = filter.since(Timestamp::from_secs(since_secs));
+    }
+    if until_secs > 0 {
+        filter = filter.until(Timestamp::from_secs(until_secs));
+    }
+    if limit > 0 {
+        filter = filter.limit(limit as usize);
+    }
+    Ok(filter.as_json())
+}
+
+#[uniffi::export]
+pub fn filter_matches_event(filter_json: String, event_json: String) -> Result<bool, NostrError> {
+    let filter = Filter::from_json(filter_json)?;
+    let event = Event::from_json(event_json)?;
+    Ok(filter.match_event(&event, MatchEventOptions::new()))
+}
+
+#[uniffi::export]
+pub fn event_created_at(event_json: String) -> Result<u64, NostrError> {
+    let event = Event::from_json(event_json)?;
+    Ok(event.created_at.as_secs())
+}
+
+#[uniffi::export]
+pub fn event_kind_value(event_json: String) -> Result<u16, NostrError> {
+    let event = Event::from_json(event_json)?;
+    Ok(event.kind.as_u16())
+}
+
+#[uniffi::export]
+pub fn event_pubkey_hex(event_json: String) -> Result<String, NostrError> {
+    let event = Event::from_json(event_json)?;
+    Ok(event.pubkey.to_hex())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;
@@ -375,6 +463,13 @@ impl NostrClient {
         self.runtime.block_on(async {
             self.client.disconnect().await;
         });
+    }
+
+    pub fn get_relays(&self) -> Vec<String> {
+        self.runtime.block_on(async {
+            let relays = self.client.relays().all().await;
+            relays.keys().map(|url| url.to_string()).collect()
+        })
     }
 }
 
