@@ -191,6 +191,13 @@ struct ContentView: View {
     @State private var pinnedEventIds = ""
     @State private var pinnedJson = ""
 
+    // Interests & Relay Set (NIP-51)
+    @State private var interestHashtags = "nostr, rust, swift"
+    @State private var interestJson = ""
+    @State private var relaySetId = "my-relays"
+    @State private var relaySetUrls = "wss://relay.damus.io, wss://relay.nostr.band"
+    @State private var relaySetJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -1784,6 +1791,66 @@ struct ContentView: View {
                             .disabled(nsecKey.isEmpty)
                             if !pinnedJson.isEmpty {
                                 jsonBlock(pinnedJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Interests & Relay Set (NIP-51)", systemImage: "star.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Interests")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Hashtags (comma-separated)", text: $interestHashtags)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let tags = interestHashtags.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    interestJson = (try? createInterests(
+                                        secretKey: nsecKey,
+                                        hashtags: tags
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Interests", systemImage: "star.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !interestJson.isEmpty {
+                                    jsonBlock(interestJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Relay Set")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Identifier (d tag)", text: $relaySetId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Relay URLs (comma-separated)", text: $relaySetUrls)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    let urls = relaySetUrls.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                    relaySetJson = (try? createRelaySet(
+                                        secretKey: nsecKey,
+                                        identifier: relaySetId,
+                                        relayUrls: urls
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Relay Set", systemImage: "server.rack")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !relaySetJson.isEmpty {
+                                    jsonBlock(relaySetJson)
+                                }
                             }
                         }
                     }

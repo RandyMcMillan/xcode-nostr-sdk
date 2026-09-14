@@ -803,6 +803,36 @@ pub fn create_pinned_notes(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn create_interests(
+    secret_key: String,
+    hashtags: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let interests = Interests {
+        hashtags,
+        coordinate: Vec::new(),
+    };
+    let event = interests.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_relay_set(
+    secret_key: String,
+    identifier: String,
+    relay_urls: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let relays: Vec<RelayUrl> = relay_urls
+        .into_iter()
+        .map(|url| RelayUrl::parse(&url))
+        .collect::<Result<Vec<_>, _>>()?;
+    let set = RelaySet::new(identifier, relays);
+    let event = set.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;

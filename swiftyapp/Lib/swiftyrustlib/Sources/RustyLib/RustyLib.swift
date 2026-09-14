@@ -1326,6 +1326,14 @@ public func createHttpAuth(secretKey: String, url: String, method: String, paylo
     )
 })
 }
+public func createInterests(secretKey: String, hashtags: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_interests(
+        FfiConverterString.lower(secretKey),
+        FfiConverterSequenceString.lower(hashtags),$0
+    )
+})
+}
 public func createLongForm(secretKey: String, title: String, content: String, summary: String, image: String, publishedAt: UInt64)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_long_form(
@@ -1391,6 +1399,15 @@ public func createRelayList(secretKey: String, relays: [RelayEntry])throws  -> S
     uniffi_rustylib_fn_func_create_relay_list(
         FfiConverterString.lower(secretKey),
         FfiConverterSequenceTypeRelayEntry.lower(relays),$0
+    )
+})
+}
+public func createRelaySet(secretKey: String, identifier: String, relayUrls: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_relay_set(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(identifier),
+        FfiConverterSequenceString.lower(relayUrls),$0
     )
 })
 }
@@ -1704,6 +1721,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_http_auth() != 29164) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_interests() != 8468) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_long_form() != 61371) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1723,6 +1743,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_relay_list() != 29302) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_relay_set() != 35357) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_report_event() != 11111) {
