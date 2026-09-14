@@ -833,6 +833,43 @@ pub fn create_relay_set(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn create_thread_reply(
+    secret_key: String,
+    content: String,
+    root_event_id_hex: String,
+    reply_to_event_id_hex: String,
+    reply_to_author_pubkey_hex: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let root_id = EventId::from_hex(&root_event_id_hex)?;
+    let reply_id = EventId::from_hex(&reply_to_event_id_hex)?;
+    let author = PublicKey::from_hex(&reply_to_author_pubkey_hex)?;
+    let event = EventBuilder::new(Kind::TextNote, content)
+        .tags([
+            Tag::event(root_id),
+            Tag::parse(["e", &reply_id.to_hex(), "", "reply"])?,
+            Tag::public_key(author),
+        ])
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn event_add_tag(
+    secret_key: String,
+    event_json: String,
+    tag_values: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event = Event::from_json(event_json)?;
+    let mut tags = event.tags.to_vec();
+    let new_tag = Tag::parse(tag_values)?;
+    tags.push(new_tag);
+    let new_event = EventBuilder::new(event.kind, event.content).tags(tags).finalize(&keys)?;
+    Ok(new_event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;

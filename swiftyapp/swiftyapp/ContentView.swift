@@ -198,6 +198,18 @@ struct ContentView: View {
     @State private var relaySetUrls = "wss://relay.damus.io, wss://relay.nostr.band"
     @State private var relaySetJson = ""
 
+    // Thread Reply
+    @State private var replyContent = "Great point!"
+    @State private var replyRootId = ""
+    @State private var replyToId = ""
+    @State private var replyToAuthor = ""
+    @State private var replyJson = ""
+
+    // Event Add Tag
+    @State private var addTagEvent = ""
+    @State private var addTagValues = ""
+    @State private var addTagResult = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -1851,6 +1863,76 @@ struct ContentView: View {
                                 if !relaySetJson.isEmpty {
                                     jsonBlock(relaySetJson)
                                 }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Thread Reply", systemImage: "bubble.left.and.bubble.right.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Content", text: $replyContent)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Root Event ID (hex)", text: $replyRootId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Reply To Event ID (hex)", text: $replyToId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Reply To Author Pubkey (hex)", text: $replyToAuthor)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                replyJson = (try? createThreadReply(
+                                    secretKey: nsecKey,
+                                    content: replyContent,
+                                    rootEventIdHex: replyRootId,
+                                    replyToEventIdHex: replyToId,
+                                    replyToAuthorPubkeyHex: replyToAuthor
+                                )) ?? ""
+                            } label: {
+                                Label("Create Reply", systemImage: "bubble.left.and.bubble.right.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !replyJson.isEmpty {
+                                jsonBlock(replyJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Event Add Tag", systemImage: "plus.viewfinder")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextEditor(text: $addTagEvent)
+                                .frame(minHeight: 60)
+                                .padding(8)
+                                .background(cardBackground)
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                )
+                            TextField("Tag values (comma-separated)", text: $addTagValues)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let values = addTagValues.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                addTagResult = (try? eventAddTag(
+                                    secretKey: nsecKey,
+                                    eventJson: addTagEvent,
+                                    tagValues: values
+                                )) ?? ""
+                            } label: {
+                                Label("Add Tag & Re-sign", systemImage: "plus.viewfinder")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !addTagResult.isEmpty {
+                                jsonBlock(addTagResult)
                             }
                         }
                     }

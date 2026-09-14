@@ -1437,6 +1437,17 @@ public func createTextNote(secretKey: String, content: String)throws  -> String 
     )
 })
 }
+public func createThreadReply(secretKey: String, content: String, rootEventIdHex: String, replyToEventIdHex: String, replyToAuthorPubkeyHex: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_thread_reply(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(content),
+        FfiConverterString.lower(rootEventIdHex),
+        FfiConverterString.lower(replyToEventIdHex),
+        FfiConverterString.lower(replyToAuthorPubkeyHex),$0
+    )
+})
+}
 public func createZapRequest(secretKey: String, recipientPubkeyHex: String, relayUrls: [String], message: String, amountMillisats: UInt64, eventIdHex: String?)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_zap_request(
@@ -1446,6 +1457,15 @@ public func createZapRequest(secretKey: String, recipientPubkeyHex: String, rela
         FfiConverterString.lower(message),
         FfiConverterUInt64.lower(amountMillisats),
         FfiConverterOptionString.lower(eventIdHex),$0
+    )
+})
+}
+public func eventAddTag(secretKey: String, eventJson: String, tagValues: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_add_tag(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(eventJson),
+        FfiConverterSequenceString.lower(tagValues),$0
     )
 })
 }
@@ -1757,7 +1777,13 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_text_note() != 25343) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_thread_reply() != 51468) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_zap_request() != 46769) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_add_tag() != 61109) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_event_content() != 63454) {
