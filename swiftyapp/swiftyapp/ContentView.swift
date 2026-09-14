@@ -13,6 +13,23 @@ struct ContentView: View {
     @State private var firstValue = 10
     @State private var secondValue = 32
 
+    // Nostr state
+    @State private var nsecKey = ""
+    @State private var npubKey = ""
+    @State private var nip19Input = ""
+    @State private var nip19Prefix = "npub"
+    @State private var nip19HexInput = ""
+    @State private var nip19Result: Nip19Result?
+    @State private var noteContent = "Hello Nostr from Rust + Swift!"
+    @State private var textNoteJson = ""
+    @State private var metadataName = "Alice"
+    @State private var metadataAbout = "Building on Nostr"
+    @State private var metadataPicture = "https://example.com/avatar.png"
+    @State private var metadataJson = ""
+    @State private var verifyInput = ""
+    @State private var verifyResult: Bool?
+    @State private var extractedEventId = ""
+
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
     }
@@ -191,6 +208,221 @@ struct ContentView: View {
                             }
                         }
                     }
+
+                    // MARK: - Nostr Toolkit
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack {
+                                Label("Nostr Keys", systemImage: "key.fill")
+                                    .font(.headline)
+                                    .foregroundStyle(accentText)
+                                Spacer()
+                                Text("nostr crate")
+                                    .font(.caption.weight(.semibold))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(accentFill.opacity(colorScheme == .dark ? 0.18 : 0.12), in: Capsule())
+                                    .foregroundStyle(accentText)
+                            }
+
+                            Button {
+                                let sk = generateKeys()
+                                nsecKey = sk
+                                npubKey = (try? getPublicKey(secretKey: sk)) ?? ""
+                            } label: {
+                                Label("Generate Keys", systemImage: "arrow.clockwise.circle.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+
+                            if !nsecKey.isEmpty {
+                                VStack(alignment: .leading, spacing: 8) {
+                                    keyRow(label: "Secret Key (hex)", value: nsecKey)
+                                    keyRow(label: "Public Key (npub)", value: npubKey)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("NIP-19 Codec", systemImage: "number")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Decode")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("npub1... / nsec1... / note1...", text: $nip19Input)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    nip19Result = try? nip19Decode(bech32: nip19Input)
+                                } label: {
+                                    Label("Decode", systemImage: "arrow.down.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if let res = nip19Result {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Prefix: \(res.prefix)")
+                                        Text("Data: \(res.data)")
+                                    }
+                                    .font(.caption.monospaced())
+                                    .foregroundStyle(primaryText.opacity(0.84))
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Encode")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Hex data", text: $nip19HexInput)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Picker("Prefix", selection: $nip19Prefix) {
+                                    Text("npub").tag("npub")
+                                    Text("nsec").tag("nsec")
+                                    Text("note").tag("note")
+                                }
+                                .pickerStyle(.segmented)
+                                Button {
+                                    nip19Result = Nip19Result(
+                                        prefix: nip19Prefix,
+                                        data: (try? nip19Encode(dataHex: nip19HexInput, prefix: nip19Prefix)) ?? ""
+                                    )
+                                } label: {
+                                    Label("Encode", systemImage: "arrow.up.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if let res = nip19Result, !res.data.isEmpty {
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text("Result:")
+                                        Text(res.data)
+                                            .font(.caption.monospaced())
+                                            .foregroundStyle(primaryText.opacity(0.84))
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Events", systemImage: "doc.text")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Text Note")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextEditor(text: $noteContent)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                Button {
+                                    textNoteJson = (try? createTextNote(secretKey: nsecKey, content: noteContent)) ?? ""
+                                } label: {
+                                    Label("Sign Text Note", systemImage: "pencil.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !textNoteJson.isEmpty {
+                                    jsonBlock(textNoteJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Metadata (Kind 0)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Name", text: $metadataName)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("About", text: $metadataAbout)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Picture URL", text: $metadataPicture)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    metadataJson = (try? createMetadataEvent(
+                                        secretKey: nsecKey,
+                                        name: metadataName,
+                                        about: metadataAbout,
+                                        picture: metadataPicture
+                                    )) ?? ""
+                                } label: {
+                                    Label("Sign Metadata", systemImage: "person.crop.circle.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !metadataJson.isEmpty {
+                                    jsonBlock(metadataJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Verify / Inspect")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextEditor(text: $verifyInput)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                HStack(spacing: 12) {
+                                    Button {
+                                        verifyResult = try? verifyEvent(eventJson: verifyInput)
+                                    } label: {
+                                        Label("Verify", systemImage: "checkmark.shield.fill")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+
+                                    Button {
+                                        extractedEventId = (try? eventId(eventJson: verifyInput)) ?? ""
+                                    } label: {
+                                        Label("Event ID", systemImage: "number.circle.fill")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                }
+                                if let valid = verifyResult {
+                                    HStack(spacing: 6) {
+                                        Image(systemName: valid ? "checkmark.circle.fill" : "xmark.circle.fill")
+                                        Text(valid ? "Signature valid" : "Signature invalid")
+                                    }
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(valid ? .green : .red)
+                                }
+                                if !extractedEventId.isEmpty {
+                                    Text("Event ID: \(extractedEventId)")
+                                        .font(.caption.monospaced())
+                                        .foregroundStyle(primaryText.opacity(0.84))
+                                }
+                            }
+                        }
+                    }
                 }
                 .padding(20)
             }
@@ -238,6 +470,7 @@ struct ContentView: View {
                 pill(text: "SwiftUI")
                 pill(text: "UniFFI")
                 pill(text: "Rust")
+                pill(text: "Nostr")
             }
         }
         .padding(.bottom, 4)
@@ -289,6 +522,67 @@ struct ContentView: View {
         }
     }
 
+    private func keyRow(label: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack {
+                Text(label)
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(primaryText.opacity(0.68))
+                Spacer()
+                Button {
+                    UIPasteboard.general.string = value
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.caption)
+                        .foregroundStyle(accentFill)
+                }
+            }
+            Text(value)
+                .font(.caption.monospaced())
+                .foregroundStyle(primaryText.opacity(0.84))
+                .lineLimit(1)
+                .truncationMode(.middle)
+        }
+        .padding(10)
+        .background(cardBackground)
+        .cornerRadius(10)
+        .overlay(
+            RoundedRectangle(cornerRadius: 10)
+                .stroke(accentFill.opacity(colorScheme == .dark ? 0.15 : 0.10), lineWidth: 1)
+        )
+    }
+
+    private func jsonBlock(_ text: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text("JSON Output")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(primaryText.opacity(0.68))
+                Spacer()
+                Button {
+                    UIPasteboard.general.string = text
+                } label: {
+                    Image(systemName: "doc.on.doc")
+                        .font(.caption)
+                        .foregroundStyle(accentFill)
+                }
+            }
+            ScrollView(.horizontal, showsIndicators: true) {
+                Text(text)
+                    .font(.caption2.monospaced())
+                    .foregroundStyle(primaryText.opacity(0.84))
+                    .lineLimit(nil)
+            }
+            .padding(10)
+            .background(cardBackground)
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(accentFill.opacity(colorScheme == .dark ? 0.15 : 0.10), lineWidth: 1)
+            )
+        }
+    }
+
     private var primaryText: Color {
         colorScheme == .dark ? .white : Color(red: 0.10, green: 0.14, blue: 0.20)
     }
@@ -303,6 +597,19 @@ struct ContentView: View {
 
     private var cardBackground: Color {
         colorScheme == .dark ? .white.opacity(0.05) : .white.opacity(0.76)
+    }
+}
+
+private struct RoundedTextFieldStyle: TextFieldStyle {
+    func _body(configuration: TextField<Self._Label>) -> some View {
+        configuration
+            .padding(10)
+            .background(Color.white.opacity(0.06))
+            .cornerRadius(10)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.gray.opacity(0.2), lineWidth: 1)
+            )
     }
 }
 

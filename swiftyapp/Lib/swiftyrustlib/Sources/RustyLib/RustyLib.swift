@@ -395,6 +395,27 @@ fileprivate struct FfiConverterUInt32: FfiConverterPrimitive {
     }
 }
 
+fileprivate struct FfiConverterBool : FfiConverter {
+    typealias FfiType = Int8
+    typealias SwiftType = Bool
+
+    public static func lift(_ value: Int8) throws -> Bool {
+        return value != 0
+    }
+
+    public static func lower(_ value: Bool) -> Int8 {
+        return value ? 1 : 0
+    }
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Bool {
+        return try lift(readInt(&buf))
+    }
+
+    public static func write(_ value: Bool, into buf: inout [UInt8]) {
+        writeInt(&buf, lower(value))
+    }
+}
+
 fileprivate struct FfiConverterString: FfiConverter {
     typealias SwiftType = String
     typealias FfiType = RustBuffer
@@ -432,6 +453,188 @@ fileprivate struct FfiConverterString: FfiConverter {
         writeBytes(&buf, value.utf8)
     }
 }
+
+
+public struct Nip19Result {
+    public var prefix: String
+    public var data: String
+
+    // Default memberwise initializers are never public by default, so we
+    // declare one manually.
+    public init(prefix: String, data: String) {
+        self.prefix = prefix
+        self.data = data
+    }
+}
+
+
+
+extension Nip19Result: Equatable, Hashable {
+    public static func ==(lhs: Nip19Result, rhs: Nip19Result) -> Bool {
+        if lhs.prefix != rhs.prefix {
+            return false
+        }
+        if lhs.data != rhs.data {
+            return false
+        }
+        return true
+    }
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(prefix)
+        hasher.combine(data)
+    }
+}
+
+
+public struct FfiConverterTypeNip19Result: FfiConverterRustBuffer {
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> Nip19Result {
+        return
+            try Nip19Result(
+                prefix: FfiConverterString.read(from: &buf), 
+                data: FfiConverterString.read(from: &buf)
+        )
+    }
+
+    public static func write(_ value: Nip19Result, into buf: inout [UInt8]) {
+        FfiConverterString.write(value.prefix, into: &buf)
+        FfiConverterString.write(value.data, into: &buf)
+    }
+}
+
+
+public func FfiConverterTypeNip19Result_lift(_ buf: RustBuffer) throws -> Nip19Result {
+    return try FfiConverterTypeNip19Result.lift(buf)
+}
+
+public func FfiConverterTypeNip19Result_lower(_ value: Nip19Result) -> RustBuffer {
+    return FfiConverterTypeNip19Result.lower(value)
+}
+
+
+public enum NostrError {
+
+    
+    
+    case Invalid(String
+    )
+    case Encoding(String
+    )
+    case Event(String
+    )
+}
+
+
+public struct FfiConverterTypeNostrError: FfiConverterRustBuffer {
+    typealias SwiftType = NostrError
+
+    public static func read(from buf: inout (data: Data, offset: Data.Index)) throws -> NostrError {
+        let variant: Int32 = try readInt(&buf)
+        switch variant {
+
+        
+
+        
+        case 1: return .Invalid(
+            try FfiConverterString.read(from: &buf)
+            )
+        case 2: return .Encoding(
+            try FfiConverterString.read(from: &buf)
+            )
+        case 3: return .Event(
+            try FfiConverterString.read(from: &buf)
+            )
+
+         default: throw UniffiInternalError.unexpectedEnumCase
+        }
+    }
+
+    public static func write(_ value: NostrError, into buf: inout [UInt8]) {
+        switch value {
+
+        
+
+        
+        
+        case let .Invalid(v1):
+            writeInt(&buf, Int32(1))
+            FfiConverterString.write(v1, into: &buf)
+            
+        
+        case let .Encoding(v1):
+            writeInt(&buf, Int32(2))
+            FfiConverterString.write(v1, into: &buf)
+            
+        
+        case let .Event(v1):
+            writeInt(&buf, Int32(3))
+            FfiConverterString.write(v1, into: &buf)
+            
+        }
+    }
+}
+
+
+extension NostrError: Equatable, Hashable {}
+
+extension NostrError: Foundation.LocalizedError {
+    public var errorDescription: String? {
+        String(reflecting: self)
+    }
+}
+public func createMetadataEvent(secretKey: String, name: String, about: String, picture: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_metadata_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(name),
+        FfiConverterString.lower(about),
+        FfiConverterString.lower(picture),$0
+    )
+})
+}
+public func createTextNote(secretKey: String, content: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_text_note(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(content),$0
+    )
+})
+}
+public func eventId(eventJson: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_id(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func generateKeys() -> String {
+    return try!  FfiConverterString.lift(try! rustCall() {
+    uniffi_rustylib_fn_func_generate_keys($0
+    )
+})
+}
+public func getPublicKey(secretKey: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_get_public_key(
+        FfiConverterString.lower(secretKey),$0
+    )
+})
+}
+public func nip19Decode(bech32: String)throws  -> Nip19Result {
+    return try  FfiConverterTypeNip19Result.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_decode(
+        FfiConverterString.lower(bech32),$0
+    )
+})
+}
+public func nip19Encode(dataHex: String, prefix: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_nip19_encode(
+        FfiConverterString.lower(dataHex),
+        FfiConverterString.lower(prefix),$0
+    )
+})
+}
 public func rustAdd(a: UInt32, b: UInt32) -> UInt32 {
     return try!  FfiConverterUInt32.lift(try! rustCall() {
     uniffi_rustylib_fn_func_rust_add(
@@ -443,6 +646,13 @@ public func rustAdd(a: UInt32, b: UInt32) -> UInt32 {
 public func rustHello() -> String {
     return try!  FfiConverterString.lift(try! rustCall() {
     uniffi_rustylib_fn_func_rust_hello($0
+    )
+})
+}
+public func verifyEvent(eventJson: String)throws  -> Bool {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_verify_event(
+        FfiConverterString.lower(eventJson),$0
     )
 })
 }
@@ -462,10 +672,34 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_metadata_event() != 38004) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_text_note() != 25343) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_id() != 29818) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_generate_keys() != 9672) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_get_public_key() != 23619) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_decode() != 2298) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_nip19_encode() != 14456) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_rust_add() != 47653) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_rust_hello() != 11814) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_verify_event() != 5569) {
         return InitializationResult.apiChecksumMismatch
     }
 
