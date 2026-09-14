@@ -1189,6 +1189,15 @@ fileprivate struct FfiConverterSequenceTypeRelayEntry: FfiConverterRustBuffer {
         return seq
     }
 }
+public func addExpirationToEvent(secretKey: String, eventJson: String, expirationSecs: UInt64)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_add_expiration_to_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(eventJson),
+        FfiConverterUInt64.lower(expirationSecs),$0
+    )
+})
+}
 public func buildFilter(authorsHex: [String], kinds: [UInt16], idsHex: [String], sinceSecs: UInt64, untilSecs: UInt64, limit: UInt64)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_build_filter(
@@ -1318,6 +1327,14 @@ public func createMuteList(secretKey: String, pubkeysHex: [String], eventIdsHex:
     )
 })
 }
+public func createPinnedNotes(secretKey: String, eventIdsHex: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_pinned_notes(
+        FfiConverterString.lower(secretKey),
+        FfiConverterSequenceString.lower(eventIdsHex),$0
+    )
+})
+}
 public func createPrivateMessage(secretKey: String, recipientPubkeyHex: String, message: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_private_message(
@@ -1422,6 +1439,13 @@ public func eventPubkeyHex(eventJson: String)throws  -> String {
 public func eventSignatureValid(eventJson: String)throws  -> Bool {
     return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_event_signature_valid(
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+public func eventTagsJson(eventJson: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_event_tags_json(
         FfiConverterString.lower(eventJson),$0
     )
 })
@@ -1616,6 +1640,9 @@ private var initializationResult: InitializationResult = {
     if bindings_contract_version != scaffolding_contract_version {
         return InitializationResult.contractVersionMismatch
     }
+    if (uniffi_rustylib_checksum_func_add_expiration_to_event() != 15484) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_build_filter() != 14879) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1655,6 +1682,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_mute_list() != 58171) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_pinned_notes() != 41999) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_private_message() != 43144) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1692,6 +1722,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_event_signature_valid() != 1429) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_event_tags_json() != 48031) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_filter_matches_event() != 62926) {

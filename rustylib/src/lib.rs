@@ -757,6 +757,52 @@ pub fn create_file_metadata(
     Ok(event.as_json())
 }
 
+#[uniffi::export]
+pub fn event_tags_json(event_json: String) -> Result<String, NostrError> {
+    let event = Event::from_json(event_json)?;
+    let mut result = String::from("[");
+    for (i, tag) in event.tags.iter().enumerate() {
+        if i > 0 { result.push_str(", "); }
+        result.push('[');
+        for (j, s) in tag.as_slice().iter().enumerate() {
+            if j > 0 { result.push_str(", "); }
+            result.push_str(&format!("\"{}\"", s.replace('"', "\\\"")));
+        }
+        result.push(']');
+    }
+    result.push(']');
+    Ok(result)
+}
+
+#[uniffi::export]
+pub fn add_expiration_to_event(
+    secret_key: String,
+    event_json: String,
+    expiration_secs: u64,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event = Event::from_json(event_json)?;
+    let mut tags = event.tags.to_vec();
+    tags.push(Tag::parse(["expiration", &expiration_secs.to_string()])?);
+    let new_event = EventBuilder::new(event.kind, event.content).tags(tags).finalize(&keys)?;
+    Ok(new_event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_pinned_notes(
+    secret_key: String,
+    event_ids_hex: Vec<String>,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event_ids: Vec<EventId> = event_ids_hex
+        .into_iter()
+        .map(|hex| EventId::from_hex(&hex))
+        .collect::<Result<Vec<_>, _>>()?;
+    let pinned = PinnedNotes::new(event_ids);
+    let event = pinned.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;

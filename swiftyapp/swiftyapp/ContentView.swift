@@ -180,6 +180,17 @@ struct ContentView: View {
     @State private var fileHash = ""
     @State private var fileJson = ""
 
+    // Event Tags & Expiration
+    @State private var tagsEventInput = ""
+    @State private var tagsJsonOutput = ""
+    @State private var expEventInput = ""
+    @State private var expSeconds: UInt64 = 3600
+    @State private var expEventOutput = ""
+
+    // Pinned Notes
+    @State private var pinnedEventIds = ""
+    @State private var pinnedJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -1677,6 +1688,100 @@ struct ContentView: View {
                             .disabled(nsecKey.isEmpty)
                             if !fileJson.isEmpty {
                                 jsonBlock(fileJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Event Tags & Expiration", systemImage: "tag.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Extract Tags")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextEditor(text: $tagsEventInput)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                Button {
+                                    tagsJsonOutput = (try? eventTagsJson(eventJson: tagsEventInput)) ?? ""
+                                } label: {
+                                    Label("Get Tags JSON", systemImage: "tag.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                if !tagsJsonOutput.isEmpty {
+                                    jsonBlock(tagsJsonOutput)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Add Expiration (NIP-40)")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextEditor(text: $expEventInput)
+                                    .frame(minHeight: 60)
+                                    .padding(8)
+                                    .background(cardBackground)
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(accentFill.opacity(colorScheme == .dark ? 0.20 : 0.14), lineWidth: 1)
+                                    )
+                                TextField("Expiration (seconds from now)", value: $expSeconds, format: .number)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    expEventOutput = (try? addExpirationToEvent(
+                                        secretKey: nsecKey,
+                                        eventJson: expEventInput,
+                                        expirationSecs: expSeconds
+                                    )) ?? ""
+                                } label: {
+                                    Label("Add Expiration", systemImage: "clock.badge.xmark")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !expEventOutput.isEmpty {
+                                    jsonBlock(expEventOutput)
+                                }
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Pinned Notes (NIP-51)", systemImage: "pin.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Event IDs (comma-separated hex)", text: $pinnedEventIds)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                let ids = pinnedEventIds.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                                pinnedJson = (try? createPinnedNotes(
+                                    secretKey: nsecKey,
+                                    eventIdsHex: ids
+                                )) ?? ""
+                            } label: {
+                                Label("Create Pinned Notes", systemImage: "pin.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !pinnedJson.isEmpty {
+                                jsonBlock(pinnedJson)
                             }
                         }
                     }
