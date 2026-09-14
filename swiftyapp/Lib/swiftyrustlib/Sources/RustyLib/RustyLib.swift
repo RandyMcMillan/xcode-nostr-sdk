@@ -487,6 +487,8 @@ public protocol NostrClientProtocol : AnyObject {
     
     func addRelay(url: String) throws  -> Bool
     
+    func broadcastEvent(eventJson: String) throws  -> String
+    
     func connect() 
     
     func disconnect() 
@@ -496,6 +498,10 @@ public protocol NostrClientProtocol : AnyObject {
     func getRelays()  -> [String]
     
     func publishEvent(eventJson: String) throws  -> String
+    
+    func removeRelay(url: String) throws  -> Bool
+    
+    func sendEventTo(eventJson: String, relayUrls: [String]) throws  -> String
     
 }
 
@@ -555,6 +561,14 @@ open func addRelay(url: String)throws  -> Bool {
 })
 }
     
+open func broadcastEvent(eventJson: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_method_nostrclient_broadcast_event(self.uniffiClonePointer(),
+        FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+    
 open func connect() {try! rustCall() {
     uniffi_rustylib_fn_method_nostrclient_connect(self.uniffiClonePointer(),$0
     )
@@ -587,6 +601,23 @@ open func publishEvent(eventJson: String)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_method_nostrclient_publish_event(self.uniffiClonePointer(),
         FfiConverterString.lower(eventJson),$0
+    )
+})
+}
+    
+open func removeRelay(url: String)throws  -> Bool {
+    return try  FfiConverterBool.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_method_nostrclient_remove_relay(self.uniffiClonePointer(),
+        FfiConverterString.lower(url),$0
+    )
+})
+}
+    
+open func sendEventTo(eventJson: String, relayUrls: [String])throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_method_nostrclient_send_event_to(self.uniffiClonePointer(),
+        FfiConverterString.lower(eventJson),
+        FfiConverterSequenceString.lower(relayUrls),$0
     )
 })
 }
@@ -1796,6 +1827,9 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_method_nostrclient_add_relay() != 65028) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_method_nostrclient_broadcast_event() != 26183) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_method_nostrclient_connect() != 3203) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1809,6 +1843,12 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_method_nostrclient_publish_event() != 55850) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_method_nostrclient_remove_relay() != 45694) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_method_nostrclient_send_event_to() != 29454) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_constructor_nostrclient_new() != 14354) {

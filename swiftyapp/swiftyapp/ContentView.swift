@@ -199,6 +199,8 @@ struct ContentView: View {
     @State private var clientRelays: [String] = []
     @State private var clientFilterJson = ""
     @State private var clientFetchedEvents: [String] = []
+    @State private var clientTargetRelay = "wss://relay.damus.io"
+    @State private var clientRemoveRelay = ""
 
     private var sum: Int {
         Int(rustAdd(a: UInt32(firstValue), b: UInt32(secondValue)))
@@ -1881,6 +1883,49 @@ struct ContentView: View {
                                     ForEach(clientFetchedEvents.indices, id: \.self) { i in
                                         jsonBlock(clientFetchedEvents[i])
                                     }
+                                }
+
+                                TextField("Target relay", text: $clientTargetRelay)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                HStack(spacing: 12) {
+                                    Button {
+                                        if let result = try? nostrClient?.sendEventTo(eventJson: clientEventJson, relayUrls: [clientTargetRelay]) {
+                                            clientStatus = result
+                                        } else {
+                                            clientStatus = "Send failed"
+                                        }
+                                    } label: {
+                                        Label("Send To", systemImage: "arrow.up.forward")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                    .disabled(nostrClient == nil)
+
+                                    Button {
+                                        if let result = try? nostrClient?.broadcastEvent(eventJson: clientEventJson) {
+                                            clientStatus = result
+                                        } else {
+                                            clientStatus = "Broadcast failed"
+                                        }
+                                    } label: {
+                                        Label("Broadcast", systemImage: "antenna.radiowaves.left.and.right")
+                                            .frame(maxWidth: .infinity)
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                    .disabled(nostrClient == nil)
+                                }
+
+                                HStack(spacing: 12) {
+                                    TextField("Remove relay URL", text: $clientRemoveRelay)
+                                        .textFieldStyle(RoundedTextFieldStyle())
+                                    Button {
+                                        let _ = try? nostrClient?.removeRelay(url: clientRemoveRelay)
+                                        clientStatus = "Removed \(clientRemoveRelay)"
+                                    } label: {
+                                        Label("Remove", systemImage: "minus.circle.fill")
+                                    }
+                                    .buttonStyle(PrimaryButtonStyle())
+                                    .disabled(nostrClient == nil)
                                 }
 
                                 if !clientStatus.isEmpty {

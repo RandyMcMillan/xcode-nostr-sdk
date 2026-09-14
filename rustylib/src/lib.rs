@@ -877,6 +877,48 @@ impl NostrClient {
         })?;
         Ok(events.into_iter().map(|e| e.as_json()).collect())
     }
+
+    pub fn send_event_to(&self, event_json: String, relay_urls: Vec<String>) -> Result<String, NostrError> {
+        let event = Event::from_json(event_json)?;
+        let urls: Vec<RelayUrl> = relay_urls
+            .into_iter()
+            .map(|url| RelayUrl::parse(&url).map_err(|e| NostrError::Invalid(e.to_string())))
+            .collect::<Result<Vec<_>, _>>()?;
+        let output = self.runtime.block_on(async {
+            self.client
+                .send_event(&event)
+                .to(urls)
+                .await
+                .map_err(|e| NostrError::Invalid(e.to_string()))
+        })?;
+        let success: Vec<String> = output.success.keys().map(|u| u.to_string()).collect();
+        let failed: Vec<String> = output.failed.keys().map(|u| u.to_string()).collect();
+        Ok(format!("Sent to {} relays, failed on {} relays", success.len(), failed.len()))
+    }
+
+    pub fn broadcast_event(&self, event_json: String) -> Result<String, NostrError> {
+        let event = Event::from_json(event_json)?;
+        let output = self.runtime.block_on(async {
+            self.client
+                .send_event(&event)
+                .broadcast()
+                .await
+                .map_err(|e| NostrError::Invalid(e.to_string()))
+        })?;
+        let success: Vec<String> = output.success.keys().map(|u| u.to_string()).collect();
+        let failed: Vec<String> = output.failed.keys().map(|u| u.to_string()).collect();
+        Ok(format!("Broadcast to {} relays, failed on {} relays", success.len(), failed.len()))
+    }
+
+    pub fn remove_relay(&self, url: String) -> Result<bool, NostrError> {
+        self.runtime.block_on(async {
+            self.client
+                .remove_relay(&url)
+                .await
+                .map_err(|e| NostrError::Invalid(e.to_string()))?;
+            Ok(true)
+        })
+    }
 }
 
 #[uniffi::export]
