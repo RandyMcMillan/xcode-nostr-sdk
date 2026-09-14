@@ -178,6 +178,6 @@ DerivedData/
 
 out/
 *.xcframework/
-!swiftyapp/Lib/swiftyrustlib/artifacts/RustyCore.xcframework/
-!swiftyapp/Lib/swiftyrustlib/artifacts/RustyCore.xcframework/**
-**/**/librustylib.a
+
+# Generated Rust artifacts — rebuilt by ci_pre_xcodebuild.sh / build.sh
+swiftyapp/Lib/swiftyrustlib/artifacts/
