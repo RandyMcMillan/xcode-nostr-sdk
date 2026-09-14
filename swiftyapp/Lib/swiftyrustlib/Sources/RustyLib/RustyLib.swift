@@ -1334,6 +1334,27 @@ public func createInterests(secretKey: String, hashtags: [String])throws  -> Str
     )
 })
 }
+public func createLiveEvent(secretKey: String, identifier: String, title: String, streamingUrl: String, status: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_live_event(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(identifier),
+        FfiConverterString.lower(title),
+        FfiConverterString.lower(streamingUrl),
+        FfiConverterString.lower(status),$0
+    )
+})
+}
+public func createLiveEventMessage(secretKey: String, liveEventId: String, liveEventHostPubkeyHex: String, content: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_live_event_message(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(liveEventId),
+        FfiConverterString.lower(liveEventHostPubkeyHex),
+        FfiConverterString.lower(content),$0
+    )
+})
+}
 public func createLongForm(secretKey: String, title: String, content: String, summary: String, image: String, publishedAt: UInt64)throws  -> String {
     return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
     uniffi_rustylib_fn_func_create_long_form(
@@ -1380,6 +1401,15 @@ public func createPrivateMessage(secretKey: String, recipientPubkeyHex: String, 
         FfiConverterString.lower(secretKey),
         FfiConverterString.lower(recipientPubkeyHex),
         FfiConverterString.lower(message),$0
+    )
+})
+}
+public func createQuoteRepost(secretKey: String, content: String, quotedEventIdHex: String)throws  -> String {
+    return try  FfiConverterString.lift(try rustCallWithError(FfiConverterTypeNostrError.lift) {
+    uniffi_rustylib_fn_func_create_quote_repost(
+        FfiConverterString.lower(secretKey),
+        FfiConverterString.lower(content),
+        FfiConverterString.lower(quotedEventIdHex),$0
     )
 })
 }
@@ -1744,6 +1774,12 @@ private var initializationResult: InitializationResult = {
     if (uniffi_rustylib_checksum_func_create_interests() != 8468) {
         return InitializationResult.apiChecksumMismatch
     }
+    if (uniffi_rustylib_checksum_func_create_live_event() != 22368) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_live_event_message() != 51494) {
+        return InitializationResult.apiChecksumMismatch
+    }
     if (uniffi_rustylib_checksum_func_create_long_form() != 61371) {
         return InitializationResult.apiChecksumMismatch
     }
@@ -1757,6 +1793,9 @@ private var initializationResult: InitializationResult = {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_private_message() != 43144) {
+        return InitializationResult.apiChecksumMismatch
+    }
+    if (uniffi_rustylib_checksum_func_create_quote_repost() != 16440) {
         return InitializationResult.apiChecksumMismatch
     }
     if (uniffi_rustylib_checksum_func_create_reaction() != 11284) {

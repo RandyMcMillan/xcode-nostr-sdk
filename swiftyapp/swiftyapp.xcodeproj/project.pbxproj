@@ -149,6 +149,9 @@
 			productRefGroup = 291DE5312C3DE74F007F9706 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
+			packageReferences = (
+				2986A2E42C3FA6B100D13583 /* XCLocalSwiftPackageReference "swiftyrustlib" */,
+			);
 			targets = (
 				291DE52F2C3DE74F007F9706 /* swiftyapp */,
 			);
@@ -383,7 +386,12 @@
 /* Begin XCSwiftPackageProductDependency section */
 		2986A2E22C3F8FA200D13583 /* RustyLib */ = {
 			isa = XCSwiftPackageProductDependency;
+			package = 2986A2E42C3FA6B100D13583 /* XCLocalSwiftPackageReference "swiftyrustlib" */;
 			productName = RustyLib;
+		};
+		2986A2E42C3FA6B100D13583 /* XCLocalSwiftPackageReference "swiftyrustlib" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Lib/swiftyrustlib;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

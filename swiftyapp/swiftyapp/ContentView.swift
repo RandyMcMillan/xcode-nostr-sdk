@@ -210,6 +210,22 @@ struct ContentView: View {
     @State private var addTagValues = ""
     @State private var addTagResult = ""
 
+    // Quote Repost
+    @State private var quoteContent = "This is amazing!"
+    @State private var quoteEventId = ""
+    @State private var quoteJson = ""
+
+    // Live Event (NIP-53)
+    @State private var liveId = "my-live-event"
+    @State private var liveTitle = "My Live Stream"
+    @State private var liveStreamUrl = "https://stream.example.com/live"
+    @State private var liveStatus = "live"
+    @State private var liveJson = ""
+    @State private var liveMsgEventId = ""
+    @State private var liveMsgHost = ""
+    @State private var liveMsgContent = "Hello viewers!"
+    @State private var liveMsgJson = ""
+
     // SDK Client
     @State private var clientRelayUrl = "wss://relay.damus.io"
     @State private var clientEventJson = ""
@@ -1933,6 +1949,104 @@ struct ContentView: View {
                             .disabled(nsecKey.isEmpty)
                             if !addTagResult.isEmpty {
                                 jsonBlock(addTagResult)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Quote Repost", systemImage: "quote.bubble.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            TextField("Content", text: $quoteContent)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            TextField("Quoted Event ID (hex)", text: $quoteEventId)
+                                .textFieldStyle(RoundedTextFieldStyle())
+                            Button {
+                                quoteJson = (try? createQuoteRepost(
+                                    secretKey: nsecKey,
+                                    content: quoteContent,
+                                    quotedEventIdHex: quoteEventId
+                                )) ?? ""
+                            } label: {
+                                Label("Create Quote Repost", systemImage: "quote.bubble.fill")
+                                    .frame(maxWidth: .infinity)
+                            }
+                            .buttonStyle(PrimaryButtonStyle())
+                            .disabled(nsecKey.isEmpty)
+                            if !quoteJson.isEmpty {
+                                jsonBlock(quoteJson)
+                            }
+                        }
+                    }
+
+                    glassCard {
+                        VStack(alignment: .leading, spacing: 16) {
+                            Label("Live Event (NIP-53)", systemImage: "video.fill")
+                                .font(.headline)
+                                .foregroundStyle(accentText)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Create Live Event")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Identifier (d tag)", text: $liveId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Title", text: $liveTitle)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Streaming URL", text: $liveStreamUrl)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Status (planned/live/ended)", text: $liveStatus)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    liveJson = (try? createLiveEvent(
+                                        secretKey: nsecKey,
+                                        identifier: liveId,
+                                        title: liveTitle,
+                                        streamingUrl: liveStreamUrl,
+                                        status: liveStatus
+                                    )) ?? ""
+                                } label: {
+                                    Label("Create Live Event", systemImage: "video.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !liveJson.isEmpty {
+                                    jsonBlock(liveJson)
+                                }
+                            }
+
+                            Divider()
+                                .overlay(accentFill.opacity(colorScheme == .dark ? 0.22 : 0.16))
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Live Event Message")
+                                    .font(.subheadline.weight(.semibold))
+                                    .foregroundStyle(primaryText)
+                                TextField("Live Event ID (d tag)", text: $liveMsgEventId)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Host Pubkey (hex)", text: $liveMsgHost)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                TextField("Content", text: $liveMsgContent)
+                                    .textFieldStyle(RoundedTextFieldStyle())
+                                Button {
+                                    liveMsgJson = (try? createLiveEventMessage(
+                                        secretKey: nsecKey,
+                                        liveEventId: liveMsgEventId,
+                                        liveEventHostPubkeyHex: liveMsgHost,
+                                        content: liveMsgContent
+                                    )) ?? ""
+                                } label: {
+                                    Label("Send Message", systemImage: "message.fill")
+                                        .frame(maxWidth: .infinity)
+                                }
+                                .buttonStyle(PrimaryButtonStyle())
+                                .disabled(nsecKey.isEmpty)
+                                if !liveMsgJson.isEmpty {
+                                    jsonBlock(liveMsgJson)
+                                }
                             }
                         }
                     }

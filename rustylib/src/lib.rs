@@ -870,6 +870,85 @@ pub fn event_add_tag(
     Ok(new_event.as_json())
 }
 
+#[uniffi::export]
+pub fn create_quote_repost(
+    secret_key: String,
+    content: String,
+    quoted_event_id_hex: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let event_id = EventId::from_hex(&quoted_event_id_hex)?;
+    let event = EventBuilder::new(Kind::TextNote, content)
+        .tags([Tag::parse(["q", &event_id.to_hex()])?])
+        .finalize(&keys)?;
+    Ok(event.as_json())
+}
+
+#[uniffi::export]
+pub fn create_live_event(
+    secret_key: String,
+    identifier: String,
+    title: String,
+    streaming_url: String,
+    status: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let status = match status.as_str() {
+        "planned" => LiveEventStatus::Planned,
+        "live" => LiveEventStatus::Live,
+        "ended" => LiveEventStatus::Ended,
+        _ => LiveEventStatus::Planned,
+    };
+    let mut event = LiveEvent {
+        kind: Kind::LiveEvent,
+        id: identifier,
+        room: None,
+        space: None,
+        title: Some(title),
+        summary: None,
+        image: None,
+        hashtags: Vec::new(),
+        streaming: Some(Url::parse(&streaming_url).map_err(|e| NostrError::Invalid(e.to_string()))?),
+        recording: None,
+        service: None,
+        endpoint: None,
+        starts: None,
+        ends: None,
+        status: Some(status),
+        current_participants: None,
+        total_participants: None,
+        relays: Vec::new(),
+        pinned: Vec::new(),
+        host: None,
+        owners: Vec::new(),
+        moderators: Vec::new(),
+        speakers: Vec::new(),
+        participants: Vec::new(),
+        hand: None,
+    };
+    event.host = Some(LiveEventHost {
+        public_key: keys.public_key(),
+        relay_url: None,
+        proof: None,
+    });
+    let ev = event.finalize(&keys)?;
+    Ok(ev.as_json())
+}
+
+#[uniffi::export]
+pub fn create_live_event_message(
+    secret_key: String,
+    live_event_id: String,
+    live_event_host_pubkey_hex: String,
+    content: String,
+) -> Result<String, NostrError> {
+    let keys = Keys::parse(&secret_key)?;
+    let host = PublicKey::from_hex(&live_event_host_pubkey_hex)?;
+    let msg = LiveEventMessageBuilder::new(live_event_id, host, content);
+    let event = msg.finalize(&keys)?;
+    Ok(event.as_json())
+}
+
 // Nostr SDK client wrapper
 
 use nostr_sdk::client::Client;
