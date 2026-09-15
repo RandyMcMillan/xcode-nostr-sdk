@@ -15,7 +15,9 @@ rustup target add aarch64-apple-ios-sim
 rustup target add aarch64-apple-darwin
 
 # Build Rust xcframework so real binaries exist before Xcode processes the project
-cd "$CI_WORKSPACE"
+# ci_scripts runs from the ci_scripts directory; repo root is two levels up
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR/../.."
 ./build.sh
 
 echo "Rust installed and xcframework built."
