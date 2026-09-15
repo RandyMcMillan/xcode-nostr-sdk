@@ -14,4 +14,8 @@ rustup target add aarch64-apple-ios
 rustup target add aarch64-apple-ios-sim
 rustup target add aarch64-apple-darwin
 
-echo "Rust installed and targets added."
+# Build Rust xcframework so real binaries exist before Xcode processes the project
+cd "$CI_WORKSPACE"
+./build.sh
+
+echo "Rust installed and xcframework built."
