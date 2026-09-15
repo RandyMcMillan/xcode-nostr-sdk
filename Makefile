@@ -69,3 +69,8 @@ install: catalyst
 clean:
 	cd "$(RUST_CRATE_DIR)" && cargo clean
 	rm -rf "$(DERIVED_DATA)"
+	git stash -- swiftyapp/Lib/swiftyrustlib/artifacts/RustyCore.xcframework/Info.plist
+	git stash -- swiftyapp/Lib/swiftyrustlib/artifacts/RustyCore.xcframework/ios-arm64-simulator/librustylib.a
+	git stash -- swiftyapp/Lib/swiftyrustlib/artifacts/RustyCore.xcframework/ios-arm64/librustylib.a
+	git stash -- swiftyapp/Lib/swiftyrustlib/artifacts/RustyCore.xcframework/macos-arm64/librustylib.a
+	git stash list
