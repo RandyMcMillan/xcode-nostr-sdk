@@ -11,9 +11,19 @@
 		291DE5362C3DE74F007F9706 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 291DE5352C3DE74F007F9706 /* ContentView.swift */; };
 		291DE5382C3DE74F007F9706 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 291DE5372C3DE74F007F9706 /* Assets.xcassets */; };
 		291DE53B2C3DE74F007F9706 /* Preview Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 291DE53A2C3DE74F007F9706 /* Preview Assets.xcassets */; };
-		B42F5334E1C144DAAFBD5AD2 /* RustyCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F01CD109BA2414FBF3F39EA /* RustyCore.xcframework */; };
 		8BCFE1698CF6434085FA2D2E /* RustyLib.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8BCFE1698CF6434085FA2D2D /* RustyLib.swift */; };
+		B42F5334E1C144DAAFBD5AD2 /* RustyCore.xcframework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F01CD109BA2414FBF3F39EA /* RustyCore.xcframework */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		4B582E34305AC5D30059A389 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 291DE5282C3DE74F007F9706 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8BCFE1698CF6434085FA2D29;
+			remoteInfo = BuildRust;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
 		291DE5592C3DF1CA007F9706 /* Embed Frameworks */ = {
@@ -29,12 +39,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		0F01CD109BA2414FBF3F39EA /* RustyCore.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RustyCore.xcframework; path = Lib/swiftyrustlib/artifacts/RustyCore.xcframework; sourceTree = "<group>"; };
 		291DE5302C3DE74F007F9706 /* xcode-nostr-sdk.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "xcode-nostr-sdk.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		291DE5332C3DE74F007F9706 /* swiftyappApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = swiftyappApp.swift; sourceTree = "<group>"; };
 		291DE5352C3DE74F007F9706 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		291DE5372C3DE74F007F9706 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		291DE53A2C3DE74F007F9706 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
-		0F01CD109BA2414FBF3F39EA /* RustyCore.xcframework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcframework; name = RustyCore.xcframework; path = Lib/swiftyrustlib/artifacts/RustyCore.xcframework; sourceTree = "<group>"; };
 		8BCFE1698CF6434085FA2D2D /* RustyLib.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RustyLib.swift; path = swiftyrustlib/Sources/RustyLib/RustyLib.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -105,6 +115,22 @@
 		};
 /* End PBXGroup section */
 
+/* Begin PBXLegacyTarget section */
+		8BCFE1698CF6434085FA2D29 /* BuildRust */ = {
+			isa = PBXLegacyTarget;
+			buildConfigurationList = 8BCFE1698CF6434085FA2D2C /* Build configuration list for PBXLegacyTarget "BuildRust" */;
+			buildPhases = (
+			);
+			buildToolPath = /bin/bash;
+			buildWorkingDirectory = "$(SRCROOT)/..";
+			dependencies = (
+			);
+			name = BuildRust;
+			passBuildSettingsInEnvironment = 1;
+			productName = BuildRust;
+		};
+/* End PBXLegacyTarget section */
+
 /* Begin PBXNativeTarget section */
 		291DE52F2C3DE74F007F9706 /* swiftyapp */ = {
 			isa = PBXNativeTarget;
@@ -129,22 +155,6 @@
 		};
 /* End PBXNativeTarget section */
 
-/* Begin PBXLegacyTarget section */
-		8BCFE1698CF6434085FA2D29 /* BuildRust */ = {
-			isa = PBXLegacyTarget;
-			buildConfigurationList = 8BCFE1698CF6434085FA2D2C /* Build configuration list for PBXLegacyTarget "BuildRust" */;
-			buildPhases = (
-			);
-			buildToolPath = /bin/bash;
-			buildWorkingDirectory = "$(SRCROOT)/..";
-			dependencies = (
-			);
-			name = BuildRust;
-			passBuildSettingsInEnvironment = 1;
-			productName = BuildRust;
-		};
-/* End PBXLegacyTarget section */
-
 /* Begin PBXProject section */
 		291DE5282C3DE74F007F9706 /* Project object */ = {
 			isa = PBXProject;
@@ -167,11 +177,11 @@
 				Base,
 			);
 			mainGroup = 291DE5272C3DE74F007F9706;
+			packageReferences = (
+			);
 			productRefGroup = 291DE5312C3DE74F007F9706 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
-			packageReferences = (
-			);
 			targets = (
 				8BCFE1698CF6434085FA2D29 /* BuildRust */,
 				291DE52F2C3DE74F007F9706 /* swiftyapp */,
@@ -208,6 +218,7 @@
 		2354957D5E924447A08669E0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 8BCFE1698CF6434085FA2D29 /* BuildRust */;
+			targetProxy = 4B582E34305AC5D30059A389 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -337,7 +348,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"swiftyapp/Preview Content\"";
 				DEVELOPMENT_TEAM = M684FYCYG6;
 				ENABLE_PREVIEWS = YES;
@@ -366,7 +377,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2;
 				DEVELOPMENT_ASSET_PATHS = "\"swiftyapp/Preview Content\"";
 				DEVELOPMENT_TEAM = M684FYCYG6;
 				ENABLE_PREVIEWS = YES;
@@ -392,8 +403,8 @@
 		8BCFE1698CF6434085FA2D2A /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUILD_TOOL = /bin/bash;
 				BUILD_ARGUMENTS = "-c ./build.sh";
+				BUILD_TOOL = /bin/bash;
 				BUILD_WORKING_DIRECTORY = "$(SRCROOT)/..";
 			};
 			name = Debug;
@@ -401,8 +412,8 @@
 		8BCFE1698CF6434085FA2D2B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				BUILD_TOOL = /bin/bash;
 				BUILD_ARGUMENTS = "-c ./build.sh";
+				BUILD_TOOL = /bin/bash;
 				BUILD_WORKING_DIRECTORY = "$(SRCROOT)/..";
 			};
 			name = Release;
@@ -438,8 +449,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
-
 	};
 	rootObject = 291DE5282C3DE74F007F9706 /* Project object */;
 }
